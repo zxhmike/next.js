@@ -156,7 +156,7 @@ module.exports = (actionInfo) => {
                 pipeline: {
                   'test-pack': {
                     outputs: [packedPkgPath],
-                    inputs: ['**/*'], // We want to track the whole folder
+                    inputs: ['*', '!node_modules/', '!.turbo/'],
                   },
                 },
               })
