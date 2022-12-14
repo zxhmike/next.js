@@ -77,6 +77,7 @@ module.exports = (actionInfo) => {
         await rootSpan
           .traceChild('prepare packages for packing')
           .traceAsyncFn(async () => {
+            const repoData = require(path.join(repoDir, 'package.json'))
             for (const pkg of pkgs) {
               const pkgPath = path.join(repoDir, 'packages', pkg)
               const packedPkgPath = path.join(pkgPath, `${pkg}-packed.tgz`)
@@ -100,7 +101,7 @@ module.exports = (actionInfo) => {
             }
 
             for (const pkg of pkgDatas.keys()) {
-              const { pkgDataPath, pkgData } = pkgDatas.get(pkg)
+              const { pkgDataPath, pkgData, pkgPath } = pkgDatas.get(pkg)
 
               // Correctly link other packages
               for (const pkg of pkgDatas.keys()) {
@@ -143,6 +144,20 @@ module.exports = (actionInfo) => {
                 // See https://github.com/pnpm/pnpm/issues/2941
                 delete pkgData.scripts.prepublishOnly
               }
+
+              // Turbo requires this field
+              pkgData.packageManager ??= repoData.packageManager
+
+              tkgData.scripts ??= {}
+              pkgData.scripts['test-pack'] = ''
+              await fs.writeJSON(path.join(pkgPath, 'turbo.json'), {
+                pipeline: {
+                  'test-pack': {
+                    outputs: [packedPkgPath],
+                    inputs: ['**/*'], // We want to track the whole folder
+                  },
+                },
+              })
 
               await fs.writeFile(
                 pkgDataPath,
