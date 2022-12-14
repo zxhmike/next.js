@@ -88,9 +88,8 @@ module.exports = (actionInfo) => {
                 continue
               }
               const pkgData = require(pkgDataPath)
-              const { name, version } = pkgData
+              const { name } = pkgData
               pkgDatas.set(name, {
-                version,
                 pkgDataPath,
                 pkg,
                 pkgPath,
@@ -100,19 +99,20 @@ module.exports = (actionInfo) => {
               pkgPaths.set(name, packedPkgPath)
             }
 
-            for (const pkg of pkgDatas.keys()) {
-              const { pkgDataPath, pkgData, pkgPath } = pkgDatas.get(pkg)
+            for (const pkgName of pkgDatas.keys()) {
+              const { pkgDataPath, pkgData, pkgPath, packedPkgPath, pkg } =
+                pkgDatas.get(pkgName)
 
               // Correctly link other packages
-              for (const pkg of pkgDatas.keys()) {
-                const { packedPkgPath } = pkgDatas.get(pkg)
-                if (!pkgData.dependencies || !pkgData.dependencies[pkg])
+              for (const depPkg of pkgDatas.keys()) {
+                const depData = pkgDatas.get(depPkg)
+                if (!pkgData.dependencies || !pkgData.dependencies[depPkg])
                   continue
-                pkgData.dependencies[pkg] = packedPkgPath
+                pkgData.dependencies[depPkg] = depData.packedPkgPath
               }
 
               // make sure native binaries are included in local linking
-              if (pkg === '@next/swc') {
+              if (pkgName === '@next/swc') {
                 if (!pkgData.files) {
                   pkgData.files = []
                 }
@@ -125,7 +125,7 @@ module.exports = (actionInfo) => {
                 )
               }
 
-              if (pkg === 'next') {
+              if (pkgName === 'next') {
                 if (nextSwcPkg) {
                   Object.assign(pkgData.dependencies, nextSwcPkg)
                 } else {
@@ -148,8 +148,10 @@ module.exports = (actionInfo) => {
               // Turbo requires this field
               pkgData.packageManager ??= repoData.packageManager
 
-              tkgData.scripts ??= {}
-              pkgData.scripts['test-pack'] = ''
+              pkgData.scripts ??= {}
+              pkgData.scripts[
+                'test-pack'
+              ] = `pnpm pack && mv *${pkg}-${pkgData.version}.tgz ${pkg}-packed.tgz`
               await fs.writeJSON(path.join(pkgPath, 'turbo.json'), {
                 pipeline: {
                   'test-pack': {
@@ -158,6 +160,9 @@ module.exports = (actionInfo) => {
                   },
                 },
               })
+
+              // Turbo requires pnpm-lock.yaml that is not empty
+              await fs.writeFile(path.join(pkgPath, 'pnpm-lock.yaml'), '')
 
               await fs.writeFile(
                 pkgDataPath,
@@ -178,11 +183,8 @@ module.exports = (actionInfo) => {
                 packingSpan
                   .traceChild(`pack ${pkgName}`)
                   .traceAsyncFn(async () => {
-                    const { pkg, pkgPath, version } = pkgDatas.get(pkgName)
-                    await exec(`cd ${pkgPath} && pnpm pack`, true)
-                    await exec(
-                      `cd ${pkgPath} && mv *${pkg}-${version}.tgz ${pkg}-packed.tgz`
-                    )
+                    const { pkgPath } = pkgDatas.get(pkgName)
+                    await exec(`cd ${pkgPath} && turbo run test-pack`, true)
                   })
               )
             }
