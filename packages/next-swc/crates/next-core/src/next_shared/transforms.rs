@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use anyhow::Result;
 use next_transform_dynamic::{next_dynamic, NextDynamicMode};
 use next_transform_strip_page_exports::{next_transform_strip_page_exports, ExportFilter};
-use swc_core::{
+use turbo_binding::swc::core::{
     common::{util::take::Take, FileName},
     ecma::{
         ast::{Module, ModuleItem, Program},

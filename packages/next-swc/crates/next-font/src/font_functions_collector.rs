@@ -1,4 +1,4 @@
-use swc_core::{
+use turbo_binding::swc::core::{
     common::errors::HANDLER,
     ecma::{
         ast::*,

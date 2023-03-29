@@ -12,4 +12,4 @@ bench = false
 rustc-hash = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-swc_core = { workspace = true }
+turbo-binding = { workspace = true, features = ["__swc_core_next_core"] }

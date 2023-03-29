@@ -8,6 +8,7 @@ members = [
   "crates/next-core",
   "crates/next-dev",
   "crates/next-dev-tests",
+  "crates/next-font",
   "crates/next-transform-font",
   "crates/next-transform-dynamic",
   "crates/next-transform-strip-page-exports",

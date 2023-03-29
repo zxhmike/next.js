@@ -1,6 +1,6 @@
 use anyhow::{anyhow, bail, Context, Result};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use swc_core::ecma::ast::Program;
+use turbo_binding::swc::core::ecma::ast::Program;
 use turbo_binding::turbo::tasks_fs::{
     json::parse_json_rope_with_source_context, FileContent, FileSystemPathVc,
 };

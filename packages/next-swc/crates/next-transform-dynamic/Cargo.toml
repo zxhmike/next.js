@@ -11,19 +11,12 @@ bench = false
 
 [dependencies]
 pathdiff = { workspace = true }
-
-swc_core = { workspace = true, features = [
-  "ecma_ast",
-  "common",
-  "ecma_codegen",
-  "ecma_parser",
-  "ecma_quote",
-  "ecma_visit",
-  "ecma_utils",
-  "testing",
-  "base",
-] }
+turbo-binding = { workspace = true, features = [
+  "__swc_core_next_core",
+]}
 
 [dev-dependencies]
-swc_core = { workspace = true, features = ["testing_transform"] }
+turbo-binding = { workspace = true, features = [
+  "__swc_core_testing_transform",
+]}
 testing = { workspace = true }

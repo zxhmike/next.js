@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use pathdiff::diff_paths;
-use swc_core::{
+use turbo_binding::swc::core::{
     common::{errors::HANDLER, FileName, Span, DUMMY_SP},
     ecma::{
         ast::{
@@ -14,7 +14,6 @@ use swc_core::{
         utils::{private_ident, ExprFactory},
         visit::{Fold, FoldWith},
     },
-    quote,
 };
 
 pub fn next_dynamic(
