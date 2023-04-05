@@ -52,6 +52,7 @@ use turbo_binding::{
         },
         turbopack::{
             ecmascript::EcmascriptInputTransform,
+            module_options::ModuleOptionsContextVc,
             transition::{TransitionVc, TransitionsByNameVc},
             ModuleAssetContextVc,
         },
@@ -148,10 +149,21 @@ async fn next_client_transition(
     let client_resolve_options_context =
         get_client_resolve_options_context(project_path, ty, next_config, execution_context);
 
+    let mut module_options_context = (*client_module_options_context.await?).clone();
+    if let Some(v) = module_options_context.enable_jsx {
+        let mut v = (*v.await?).clone();
+        v.import_source = None;
+        //module_options_context.enable_jsx = Some(JsxTransformOptionsVc::cell(v));
+        module_options_context.enable_emotion = None;
+        module_options_context.enable_jsx = None; //Some(JsxTransformOptionsVc::cell(Default::default()));
+    }
+
+    let transition_module_options_context = ModuleOptionsContextVc::cell(module_options_context);
+
     Ok(NextClientTransition {
         is_app: true,
         client_chunking_context,
-        client_module_options_context,
+        client_module_options_context: transition_module_options_context,
         client_resolve_options_context,
         client_compile_time_info,
         runtime_entries: client_runtime_entries,

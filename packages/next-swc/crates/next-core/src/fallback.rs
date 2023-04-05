@@ -13,7 +13,9 @@ use turbo_binding::{
         dev_server::html::DevHtmlAssetVc,
         node::execution_context::ExecutionContextVc,
         turbopack::{
-            ecmascript::EcmascriptModuleAssetVc, transition::TransitionsByNameVc,
+            ecmascript::EcmascriptModuleAssetVc,
+            module_options::{JsxTransformOptions, ModuleOptionsContextVc, JsxTransformOptionsVc},
+            transition::TransitionsByNameVc,
             ModuleAssetContextVc,
         },
     },
@@ -49,6 +51,17 @@ pub async fn get_fallback_page(
         ty,
         next_config,
     );
+    let mut module_options_context = (*module_options_context.await?).clone();
+    if let Some(v) = module_options_context.enable_jsx {
+        let mut v = (*v.await?).clone();
+        v.import_source = None;
+        //module_options_context.enable_jsx = Some(JsxTransformOptionsVc::cell(v));
+        module_options_context.enable_emotion = None;
+        module_options_context.enable_jsx = None;//Some(JsxTransformOptionsVc::cell(Default::default()));
+    }
+
+    let module_options_context = ModuleOptionsContextVc::cell(module_options_context);
+
     let chunking_context = get_client_chunking_context(
         project_path,
         dev_server_root,

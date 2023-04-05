@@ -6,7 +6,7 @@ use turbo_binding::{
     turbo::{tasks_env::ProcessEnvVc, tasks_fs::FileSystemPathVc},
     turbopack::{
         core::{
-            chunk::ChunkingContextVc,
+            chunk::{ChunkingContextVc, ChunkingContext},
             compile_time_defines,
             compile_time_info::{
                 CompileTimeDefinesVc, CompileTimeInfo, CompileTimeInfoVc, FreeVarReference,
@@ -24,6 +24,7 @@ use turbo_binding::{
         turbopack::{
             module_options::{
                 module_options_context::{ModuleOptionsContext, ModuleOptionsContextVc},
+
                 PostCssTransformOptions, WebpackLoadersOptions,
             },
             resolve_options_context::{ResolveOptionsContext, ResolveOptionsContextVc},
@@ -48,7 +49,7 @@ use crate::{
     react_refresh::assert_can_resolve_react_refresh,
     transform_options::{
         get_decorators_transform_options, get_jsx_transform_options,
-        get_typescript_transform_options,
+        get_typescript_transform_options, get_emotion_compiler_config,
     },
     util::foreign_code_context_condition,
 };
@@ -174,6 +175,8 @@ pub async fn get_client_module_options_context(
             .clone_if()
     };
 
+    let emotion_compiler_options = get_emotion_compiler_config(next_config);
+
     let module_options_context = ModuleOptionsContext {
         preset_env_versions: Some(env),
         execution_context: Some(execution_context),
@@ -185,10 +188,11 @@ pub async fn get_client_module_options_context(
         // we try resolve it once at the root and pass down a context to all
         // the modules.
         enable_jsx: Some(jsx_runtime_options),
-        enable_emotion: true,
+        enable_emotion: Some(emotion_compiler_options),
         enable_react_refresh,
-        enable_styled_components: true,
-        enable_styled_jsx: true,
+        // We should enable these based on configuration or environment
+        enable_styled_components: false,
+        enable_styled_jsx: false,
         enable_postcss_transform: Some(PostCssTransformOptions {
             postcss_package: Some(get_postcss_package_mapping(project_path)),
             ..Default::default()
