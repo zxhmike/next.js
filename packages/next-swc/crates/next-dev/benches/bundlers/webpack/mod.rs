@@ -26,7 +26,7 @@ impl Bundler for Webpack {
             install_dir,
             &[
                 NpmPackage::new("@pmmmwh/react-refresh-webpack-plugin", "^0.5.7"),
-                NpmPackage::new("@swc/core", "^1.2.249"),
+                NpmPackage::new("@swc/core", "^1.3.46"),
                 NpmPackage::new("@swc/helpers", "^0.4.13"),
                 NpmPackage::new("react-refresh", "^0.14.0"),
                 NpmPackage::new("swc-loader", "^0.2.3"),
