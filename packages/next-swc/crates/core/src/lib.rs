@@ -191,13 +191,16 @@ where
             Either::Right(noop())
         },
         match &opts.styled_components {
-            Some(config) => Either::Left(
-                turbo_binding::swc::custom_transform::styled_components::styled_components(
-                    file.name.clone(),
-                    file.src_hash,
-                    config.clone(),
+            Some(config) => {
+                //println!("{:#?}", config);
+                Either::Left(
+                    turbo_binding::swc::custom_transform::styled_components::styled_components(
+                        file.name.clone(),
+                        file.src_hash,
+                        config.clone(),
+                    )
                 )
-            ),
+            },
             None => Either::Right(noop()),
         },
         Optional::new(
