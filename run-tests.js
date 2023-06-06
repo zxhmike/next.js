@@ -347,6 +347,14 @@ async function main() {
 
       if (shouldEnableTestTrace) {
         console.log(`Running test with Datadog tracing enabled`)
+      } else {
+        const x = traceEnv
+        delete x.DD_API_KEY
+        console.log({
+          ...traceEnv,
+          DD_API_KEY: !!process.env.DATADOG_API_KEY,
+        })
+        throw new Error('a')
       }
 
       const child = spawn(
