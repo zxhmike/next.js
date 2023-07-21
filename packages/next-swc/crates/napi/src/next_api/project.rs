@@ -6,9 +6,11 @@ use next_api::{
     project::{Middleware, ProjectContainer, ProjectOptions},
     route::{Endpoint, Route},
 };
+use next_core::next_telemetry::ModuleFeatureTelemetry;
 use turbo_tasks::{TurboTasks, Vc};
 use turbopack_binding::{
-    turbo::tasks_memory::MemoryBackend, turbopack::core::error::PrettyPrintError,
+    turbo::tasks_memory::MemoryBackend,
+    turbopack::core::{diagnostics::DiagnosticExt, error::PrettyPrintError},
 };
 
 use super::{
@@ -221,6 +223,7 @@ pub fn project_entrypoints_subscribe(
 ) -> napi::Result<External<RootTask>> {
     let turbo_tasks = project.turbo_tasks().clone();
     let project = **project;
+
     subscribe(
         turbo_tasks.clone(),
         func,

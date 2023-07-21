@@ -138,6 +138,20 @@ pub struct Project {
 
 #[turbo_tasks::value_impl]
 impl Project {
+    /// Collects top-level project information, emit related telemetry events.
+    ///
+    /// In next-dev, this collection occurs when reading webpack config
+    /// (https://github.com/vercel/next.js/blob/576cb6ed4f5ac99a7e2857110e109d23db45e6fa/packages/next/src/build/webpack-config.ts#L2513)
+    ///
+    /// then actual emission occurs in build phase along with other stats.
+    /// (https://github.com/vercel/next.js/blob/576cb6ed4f5ac99a7e2857110e109d23db45e6fa/packages/next/src/build/index.ts#L2983)
+    #[turbo_tasks::function]
+    async fn collect_project_config_telemetry(self: Vc<Self>) -> Result<Vc<()>> {
+        let config = self.next_config().await?;
+
+        Ok(unit())
+    }
+
     #[turbo_tasks::function]
     async fn app_project(self: Vc<Self>) -> Result<Vc<OptionAppProject>> {
         let this = self.await?;
@@ -349,6 +363,8 @@ impl Project {
     /// provided page_extensions).
     #[turbo_tasks::function]
     pub async fn entrypoints(self: Vc<Self>) -> Result<Vc<Entrypoints>> {
+        self.collect_project_config_telemetry().await?;
+
         let mut routes = IndexMap::new();
         let app_project = self.app_project();
         let pages_project = self.pages_project();
