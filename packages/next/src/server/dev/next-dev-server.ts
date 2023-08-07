@@ -806,6 +806,7 @@ export default class DevServer extends Server {
 
   protected async getFallbackErrorComponents(): Promise<LoadComponentsReturnType | null> {
     if (this.isRenderWorker) {
+      console.log('dev-server:getFallbackErrorComponents')
       await invokeIpcMethod({
         hostname: this.hostname,
         method: 'getFallbackErrorComponents',
@@ -813,7 +814,7 @@ export default class DevServer extends Server {
         ipcPort: process.env.__NEXT_PRIVATE_ROUTER_IPC_PORT,
         ipcKey: process.env.__NEXT_PRIVATE_ROUTER_IPC_KEY,
       })
-      return await loadDefaultErrorComponents(this.distDir)
+      return await loadDefaultErrorComponents(this.distDir, true)
     }
     throw new Error(
       `Invariant getFallbackErrorComponents called outside render worker`

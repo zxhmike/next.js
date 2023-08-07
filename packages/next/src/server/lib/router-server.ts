@@ -144,13 +144,14 @@ export async function initialize(opts: {
       return await devInstance?.logErrorWithOriginalStack(...args)
     },
     async getFallbackErrorComponents() {
+      console.log('route server')
       await devInstance?.hotReloader?.buildFallbackError()
       // Build the error page to ensure the fallback is built too.
       // TODO: See if this can be moved into hotReloader or removed.
-      await devInstance?.hotReloader.ensurePage({
-        page: '/_error',
-        clientOnly: false,
-      })
+      // await devInstance?.hotReloader.ensurePage({
+      //   page: '/_error',
+      //   clientOnly: false,
+      // })
     },
     async getCompilationError(page: string) {
       const errors = await devInstance?.hotReloader?.getCompilationErrors(page)
