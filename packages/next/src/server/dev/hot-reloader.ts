@@ -641,6 +641,7 @@ export default class HotReloader {
       entrypoints: (
         await createEntrypoints({
           appDir: this.appDir,
+          pagesDir: this.pagesDir,
           buildId: this.buildId,
           config: this.config,
           envFiles: [],
@@ -649,7 +650,8 @@ export default class HotReloader {
             '/_app': 'next/dist/pages/_app',
             '/_error': 'next/dist/pages/_error',
           },
-          pagesDir: this.pagesDir,
+          appPaths: { ['/_error']: '/_error/page' },
+
           previewMode: this.previewProps,
           rootDir: this.dir,
           pageExtensions: this.config.pageExtensions,

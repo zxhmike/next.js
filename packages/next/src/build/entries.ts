@@ -494,6 +494,7 @@ export async function createEntrypoints(
   const client: webpack.EntryObject = {}
   let middlewareMatchers: MiddlewareMatcher[] | undefined = undefined
 
+  console.log('appDir', appDir, 'appPaths', appPaths)
   let appPathsPerRoute: Record<string, string[]> = {}
   if (appDir && appPaths) {
     for (const pathname in appPaths) {
@@ -513,6 +514,8 @@ export async function createEntrypoints(
       Object.entries(appPathsPerRoute).map(([k, v]) => [k, v.sort()])
     )
   }
+
+  console.log('appPathsPerRoute', appPathsPerRoute)
 
   const getEntryHandler =
     (
@@ -689,6 +692,8 @@ export async function createEntrypoints(
   )
 
   await Promise.all(promises)
+
+  console.log('client', client)
 
   return {
     client,
