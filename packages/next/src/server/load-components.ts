@@ -66,8 +66,8 @@ async function loadDefaultErrorComponentsImpl(
     ? (require('./future/route-modules/app-page/builtin/_error') as typeof import('./future/route-modules/app-page/builtin/_error'))
     : (require('./future/route-modules/pages/builtin/_error') as typeof import('./future/route-modules/pages/builtin/_error'))
 
-  // @ts-ignore
   const Component =
+    // @ts-ignore
     ComponentMod.routeModule.userland[isAppDir ? 'loaderTree' : 'default']
 
   return {

@@ -1,7 +1,16 @@
+import React from 'react'
 import { RouteKind } from '../../../route-kind'
 
 // import { GlobalError } from '../../../../../client/components/error-boundary'
 import AppRouteModule from '../module'
+
+function DefaultLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html>
+      <body>{children}</body>
+    </html>
+  )
+}
 
 export const routeModule = new AppRouteModule({
   // TODO: add descriptor for internal error page
@@ -13,5 +22,21 @@ export const routeModule = new AppRouteModule({
     bundlePath: '',
     appPaths: [],
   },
-  userland: { loaderTree: ['__DEFAULT__', {}, {}] },
+  userland: {
+    loaderTree: [
+      '',
+      {
+        children: [
+          '__PAGE__',
+          {},
+          {
+            page: [() => () => <p>fallback</p>, ''],
+          },
+        ],
+      },
+      {
+        layout: [() => DefaultLayout, ''],
+      },
+    ],
+  },
 })
