@@ -2516,6 +2516,9 @@ export default async function getBaseWebpackConfig(
         new NextFontManifestPlugin({
           appDir,
         }),
+      dev &&
+        isClient &&
+        new (require('./webpack/plugins/trace-plugin').TracePlugin)(),
       !dev &&
         isClient &&
         new (require('./webpack/plugins/telemetry-plugin').TelemetryPlugin)(
