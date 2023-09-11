@@ -1,6 +1,13 @@
 import { join } from 'path'
 import { createNext, FileRef } from 'e2e-utils'
 import { NextInstance } from 'test/lib/next-modes/base'
+import { shouldRunTurboDevTest } from '../../lib/next-test-utils'
+
+// [TODO]: It is unclear why turbopack takes longer to run this test
+// remove once it's fixed
+if (shouldRunTurboDevTest()) {
+  jest.setTimeout(1000 * 60 * 5)
+}
 
 describe('optimizePackageImports', () => {
   let next: NextInstance
