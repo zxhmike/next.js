@@ -1,6 +1,6 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use next_transform_named_import::named_import_transform;
+use next_transform_named_import::{named_import_transform, optimize_barrel, OptimizeBarrelConfig};
 use swc_core::{
     common::util::take::Take,
     ecma::{
@@ -16,7 +16,8 @@ use turbopack_binding::turbopack::{
 
 use super::module_rule_match_js_no_url;
 
-/// Returns a rule which applies the transform for the optimizePackageImports option.
+/// Returns a rule which applies the transform for the optimizePackageImports
+/// option.
 pub fn get_next_named_import_transform_rule(auto_named_import_config: &Vec<String>) -> ModuleRule {
     let transformer = EcmascriptInputTransform::Plugin(Vc::cell(Box::new(NextNamedImport {
         packages: auto_named_import_config.to_vec(),
@@ -39,12 +40,17 @@ struct NextNamedImport {
 impl CustomTransformer for NextNamedImport {
     async fn transform(&self, program: &mut Program, _ctx: &TransformContext<'_>) -> Result<()> {
         let mut named_import_transform =
-            named_import_transform(next_transform_named_import::Config {
+            named_import_transform(next_transform_named_import::NamedImportConfig {
                 packages: self.packages.clone(),
             });
 
+        //let mut optimize_barrel = optimize_barrel(OptimizeBarrelConfig { wildcard: false });
+
         let p = std::mem::replace(program, Program::Module(Module::dummy()));
-        *program = p.fold_with(&mut named_import_transform);
+        let p = p.fold_with(&mut named_import_transform);
+        //*program = p.fold_with(&mut optimize_barrel);
+
+        *program = p;
 
         Ok(())
     }

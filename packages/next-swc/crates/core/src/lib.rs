@@ -134,10 +134,10 @@ pub struct TransformOptions {
     pub modularize_imports: Option<modularize_imports::Config>,
 
     #[serde(default)]
-    pub auto_modularize_imports: Option<next_transform_named_import::Config>,
+    pub auto_modularize_imports: Option<next_transform_named_import::NamedImportConfig>,
 
     #[serde(default)]
-    pub optimize_barrel_exports: Option<optimize_barrel::Config>,
+    pub optimize_barrel_exports: Option<next_transform_named_import::OptimizeBarrelConfig>,
 
     #[serde(default)]
     pub font_loaders: Option<next_transform_font::Config>,
