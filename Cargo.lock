@@ -3631,6 +3631,7 @@ dependencies = [
  "fxhash",
  "hex",
  "next-transform-font",
+ "next-transform-named-import",
  "once_cell",
  "pathdiff",
  "regex",
@@ -3690,6 +3691,16 @@ dependencies = [
  "serde",
  "serde_json",
  "swc_core",
+]
+
+[[package]]
+name = "next-transform-named-import"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "swc_core",
+ "turbopack-binding",
 ]
 
 [[package]]

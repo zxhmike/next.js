@@ -38,6 +38,7 @@ use auto_cjs::contains_cjs;
 use either::Either;
 use fxhash::FxHashSet;
 use next_transform_font::next_font_loaders;
+use next_transform_named_import::named_import_transform;
 use serde::Deserialize;
 use turbopack_binding::swc::{
     core::{
@@ -56,7 +57,6 @@ pub mod amp_attributes;
 mod auto_cjs;
 pub mod cjs_optimizer;
 pub mod disallow_re_export_all_in_page;
-pub mod named_import_transform;
 pub mod next_dynamic;
 pub mod next_ssg;
 pub mod optimize_barrel;
@@ -135,7 +135,7 @@ pub struct TransformOptions {
     pub modularize_imports: Option<modularize_imports::Config>,
 
     #[serde(default)]
-    pub auto_modularize_imports: Option<named_import_transform::Config>,
+    pub auto_modularize_imports: Option<next_transform_named_import::Config>,
 
     #[serde(default)]
     pub optimize_barrel_exports: Option<optimize_barrel::Config>,
@@ -262,7 +262,7 @@ where
             None => Either::Right(noop()),
         },
         match &opts.auto_modularize_imports {
-            Some(config) => Either::Left(named_import_transform::named_import_transform(config.clone())),
+            Some(config) => Either::Left(named_import_transform(config.clone())),
             None => Either::Right(noop()),
         },
         match &opts.optimize_barrel_exports {

@@ -16,6 +16,7 @@ fxhash = "0.2.1"
 hex = "0.4.3"
 once_cell = { workspace = true }
 next-transform-font = {workspace = true}
+next-transform-named-import = { workspace = true }
 pathdiff = "0.2.0"
 regex = "1.5"
 rustc-hash = "1"
