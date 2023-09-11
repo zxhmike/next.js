@@ -7,6 +7,7 @@ const enabledTests = [
   'test/development/api-cors-with-rewrite/index.test.ts',
   'test/development/app-dir/multiple-compiles-single-route/multiple-compiles-single-route.test.ts',
   'test/development/app-dir/strict-mode-enabled-by-default/strict-mode-enabled-by-default.test.ts',
+  'test/development/basic/barrel-optimization.test.ts',
   'test/development/basic/define-class-fields.test.ts',
   'test/development/basic/emotion-swc.test.ts',
   'test/development/basic/legacy-decorators.test.ts',
