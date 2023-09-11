@@ -3542,6 +3542,7 @@ dependencies = [
  "mime_guess",
  "next-transform-dynamic",
  "next-transform-font",
+ "next-transform-named-import",
  "next-transform-strip-page-exports",
  "once_cell",
  "qstring",

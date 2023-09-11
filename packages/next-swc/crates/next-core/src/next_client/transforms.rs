@@ -9,7 +9,8 @@ use crate::{
     next_config::NextConfig,
     next_shared::transforms::{
         get_next_dynamic_transform_rule, get_next_font_transform_rule, get_next_image_rule,
-        get_next_modularize_imports_rule, get_next_pages_transforms_rule,
+        get_next_modularize_imports_rule, get_next_named_import_transform_rule,
+        get_next_pages_transforms_rule,
     },
 };
 
@@ -25,6 +26,13 @@ pub async fn get_next_client_transforms_rules(
     let modularize_imports_config = &next_config.await?.modularize_imports;
     if let Some(modularize_imports_config) = modularize_imports_config {
         rules.push(get_next_modularize_imports_rule(modularize_imports_config));
+    }
+
+    let auto_modularize_import_config = &*next_config.optimize_package_imports().await?;
+    if !auto_modularize_import_config.is_empty() {
+        rules.push(get_next_named_import_transform_rule(
+            auto_modularize_import_config,
+        ));
     }
 
     rules.push(get_next_font_transform_rule());

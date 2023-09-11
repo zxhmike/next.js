@@ -411,6 +411,7 @@ pub struct ExperimentalConfig {
     pub isr_flush_to_disk: Option<bool>,
     mdx_rs: Option<bool>,
     pub swc_plugins: Option<Vec<(String, serde_json::Value)>>,
+    optimize_package_imports: Option<Vec<String>>,
 
     // unsupported
     adjust_font_fallbacks: Option<bool>,
@@ -550,6 +551,13 @@ impl NextConfig {
     #[turbo_tasks::function]
     pub async fn page_extensions(self: Vc<Self>) -> Result<Vc<Vec<String>>> {
         Ok(Vc::cell(self.await?.page_extensions.clone()))
+    }
+
+    #[turbo_tasks::function]
+    pub async fn optimize_package_imports(self: Vc<Self>) -> Result<Vc<Vec<String>>> {
+        Ok(Vc::cell(
+            self.await?.experimental.optimize_package_imports.clone().unwrap_or_default(),
+        ))
     }
 
     #[turbo_tasks::function]
