@@ -38,7 +38,7 @@ use auto_cjs::contains_cjs;
 use either::Either;
 use fxhash::FxHashSet;
 use next_transform_font::next_font_loaders;
-use next_transform_named_import::named_import_transform;
+use next_transform_named_import::{named_import_transform, optimize_barrel};
 use serde::Deserialize;
 use turbopack_binding::swc::{
     core::{
@@ -59,7 +59,6 @@ pub mod cjs_optimizer;
 pub mod disallow_re_export_all_in_page;
 pub mod next_dynamic;
 pub mod next_ssg;
-pub mod optimize_barrel;
 pub mod optimize_server_react;
 pub mod page_config;
 pub mod react_remove_properties;
@@ -266,7 +265,7 @@ where
             None => Either::Right(noop()),
         },
         match &opts.optimize_barrel_exports {
-            Some(config) => Either::Left(optimize_barrel::optimize_barrel(config.clone())),
+            Some(config) => Either::Left(optimize_barrel(config.clone())),
             _ => Either::Right(noop()),
         },
         match &opts.optimize_server_react {
