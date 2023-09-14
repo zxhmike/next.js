@@ -897,7 +897,7 @@ async function startWatcher(opts: SetupOpts) {
       edgeServerStats: null,
       async run(req, _res, _parsedUrl) {
         // intercept page chunks request and ensure them with turbopack
-        if (req.url?.startsWith('/_next/static/chunks/pages/')) {
+        if (req.url?.startsWith('/_next/static/chunks/pages/') || req.url?.startsWith('/_next/static/chunks/ssr/_env_')) {
           const params = matchNextPageBundleRequest(req.url)
 
           if (params) {

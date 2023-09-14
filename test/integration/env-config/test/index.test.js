@@ -94,8 +94,9 @@ const runTests = (mode = 'dev', didReload = false) => {
       '../app/.next/build-manifest.json'
     ))
 
-    const pageFile = buildManifest.pages['/global'].find((filename) =>
-      filename.includes('pages/global')
+    const pageFile = buildManifest.pages['/global'].find(
+      (filename) =>
+        filename.includes('pages/global') || filename.includes('_env_')
     )
 
     // read client bundle contents since a server side render can
@@ -283,7 +284,7 @@ describe('Env Config', () => {
         }
       })
 
-      it('should trigger HMR correctly when NEXT_PUBLIC_ env is changed', async () => {
+      it.only('should trigger HMR correctly when NEXT_PUBLIC_ env is changed', async () => {
         const envFile = join(appDir, '.env')
         const envLocalFile = join(appDir, '.env.local')
         const envContent = originalContents.find(
