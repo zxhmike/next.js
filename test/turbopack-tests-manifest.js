@@ -1,3 +1,63 @@
+/**
+ * test/e2e/app-dir/mdx/mdx.test.ts
+test/e2e/app-dir/app-routes/app-custom-route-base-path.test.ts
+test/e2e/app-dir/app-routes/app-custom-routes.test.ts
+test/e2e/app-dir/with-babel/with-babel.test.ts
+test/e2e/app-dir/next-font/next-font.test.ts
+test/e2e/app-dir/back-button-download-bug/back-button-download-bug.test.ts
+test/e2e/app-dir/app-prefetch/prefetching.test.ts
+test/e2e/app-dir/app-basepath/index.test.ts
+test/e2e/app-dir/dynamic/dynamic.test.ts
+test/e2e/app-dir/parallel-routes-and-interception/parallel-routes-and-interception.test.ts
+test/e2e/app-dir/next-image/next-image.test.ts
+test/e2e/app-dir/create-root-layout/create-root-layout.test.ts
+test/e2e/app-dir/rsc-basic/rsc-basic.test.ts
+test/e2e/app-dir/app/index.test.ts
+test/e2e/app-dir/app/standalone.test.ts
+test/e2e/app-dir/app/useReportWebVitals.test.ts
+test/e2e/app-dir/app/vercel-speed-insights.test.ts
+test/e2e/app-dir/trailingslash/trailingslash.test.ts
+test/e2e/app-dir/app-rendering/rendering.test.ts
+test/e2e/app-dir/app-client-cache/client-cache.test.ts
+test/e2e/app-dir/not-found/basic/index.test.ts
+test/e2e/app-dir/not-found/conflict-route/index.test.ts
+test/e2e/app-dir/not-found/group-route/index.test.ts
+test/e2e/app-dir/app-static/app-static.test.ts
+test/e2e/app-dir/app-static/app-static-custom-handler.test.ts
+test/e2e/app-dir/not-found-default/index.test.ts
+test/e2e/app-dir/set-cookies/set-cookies.test.ts
+test/e2e/app-dir/pages-to-app-routing/pages-to-app-routing.test.ts
+test/e2e/app-dir/parallel-routes-not-found/parallel-routes-not-found.test.ts
+test/e2e/app-dir/server-actions-relative-redirect/server-actions-relative-redirect.test.ts
+test/e2e/app-dir/app-a11y/index.test.ts
+test/e2e/app-dir/error-boundary-navigation/index.test.ts
+test/e2e/app-dir/error-boundary-navigation/override-node-env.test.ts
+test/e2e/app-dir/dynamic-href/dynamic-href.test.ts
+test/e2e/app-dir/app-middleware/app-middleware.test.ts
+test/e2e/app-dir/app-external/app-external.test.ts
+test/e2e/app-dir/app-css/index.test.ts
+test/e2e/app-dir/edge-runtime-node-compatibility/edge-runtime-node-compatibility.test.ts
+test/e2e/app-dir/metadata-edge/index.test.ts
+test/e2e/app-dir/app-alias/app-alias.test.ts
+test/e2e/app-dir/root-layout/root-layout.test.ts
+test/e2e/app-dir/app-compilation/index.test.ts
+test/e2e/app-dir/underscore-ignore-app-paths/underscore-ignore-app-paths.test.ts
+test/e2e/app-dir/draft-mode/draft-mode.test.ts
+test/e2e/app-dir/hooks/hooks.test.ts
+test/e2e/app-dir/app-prefetch-false/app-prefetch-false.test.ts
+test/e2e/app-dir/interception-middleware-rewrite/interception-middleware-rewrite.test.ts
+test/e2e/app-dir/actions/app-action-progressive-enhancement.test.ts
+test/e2e/app-dir/actions/app-action.test.ts
+test/e2e/app-dir/root-layout-render-once/index.test.ts
+test/e2e/app-dir/app-edge/app-edge.test.ts
+test/e2e/app-dir/router-autoscroll/router-autoscroll.test.ts
+test/e2e/app-dir/emotion-js/index.test.ts
+test/e2e/app-dir/metadata-dynamic-routes/index.test.ts
+test/e2e/app-dir/_allow-underscored-root-directory/_allow-underscored-root-directory.test.ts
+test/e2e/app-dir/params-hooks-compat/index.test.ts
+test/e2e/app-dir/metadata/metadata.test.ts
+test/e2e/app-dir/app-css-pageextensions/index.test.ts
+ */
 // Tests that are currently enabled with experimental Turbopack in CI.
 // Only tests that are actively testing against Turbopack should
 // be enabled here
@@ -44,7 +104,6 @@ const enabledTests = [
   'test/e2e/app-dir/asset-prefix/asset-prefix.test.ts',
   'test/e2e/app-dir/async-component-preload/async-component-preload.test.ts',
   'test/e2e/app-dir/autoscroll-with-css-modules/index.test.ts',
-  'test/e2e/app-dir/base-path/index.test.ts',
   'test/e2e/app-dir/build-size/index.test.ts',
   'test/e2e/app-dir/crypto-globally-available/crypto-globally-available.test.ts',
   'test/e2e/app-dir/deopted-into-client-rendering-warning/deopted-into-client-rendering-warning.test.ts',
@@ -113,6 +172,7 @@ const enabledTests = [
   'test/e2e/typescript-version-warning/typescript-version-warning.test.ts',
   'test/e2e/undici-fetch/index.test.ts',
   'test/integration/api-support/test/index.test.js',
+  'test/integration/app-dir-export/test/config.test.ts',
   'test/integration/404-page/test/index.test.js',
   'test/integration/404-page-app/test/index.test.js',
   'test/integration/404-page-custom-error/test/index.test.js',
@@ -120,6 +180,7 @@ const enabledTests = [
   'test/integration/create-next-app/templates-app.test.ts',
   'test/integration/create-next-app/templates-pages.test.ts',
   'test/integration/custom-routes-i18n-index-redirect/test/index.test.js',
+  'test/integration/dist-dir/test/index.test.js',
   'test/integration/index-index/test/index.test.js',
   'test/integration/next-image-new/middleware/test/index.test.ts',
   'test/integration/next-image-new/react-virtualized/test/index.test.ts',
@@ -137,6 +198,7 @@ const enabledTests = [
   'test/integration/ssg-dynamic-routes-404-page/test/index.test.js',
   'test/integration/static-404/test/index.test.js',
   'test/integration/static-page-name/test/index.test.js',
+  'test/integration/trailing-slash-dist/test/index.test.js',
   'test/integration/trailing-slashes-href-resolving/test/index.test.js',
   'test/production/app-dir-hide-suppressed-error-during-next-export/index.test.ts',
   'test/production/app-dir-prefetch-non-iso-url/index.test.ts',
@@ -145,10 +207,6 @@ const enabledTests = [
   'test/production/jest/rsc/lib/utils.test.js',
   'test/production/jest/transpile-packages.test.ts',
   'test/production/postcss-plugin-config-as-string/index.test.ts',
-  'test/production/suppo.ts',
-
-  // disabled due to nextConfig.distDir
-  //'test/integration/trailing-slash-dist/test/index.test.js',
 ]
 
 module.exports = { enabledTests }
