@@ -105,6 +105,9 @@ async function webpackBuildWithWorker() {
 export async function webpackBuild() {
   const config = NextBuildContext.config!
 
+  require('console').error('webpackBuild')
+  process.exit(-1)
+
   if (config.experimental.webpackBuildWorker) {
     debug('using separate compiler workers')
     return await webpackBuildWithWorker()
