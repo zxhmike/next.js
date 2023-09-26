@@ -4069,6 +4069,7 @@ dependencies = [
  "mime_guess",
  "next-transform-dynamic",
  "next-transform-font",
+ "next-transform-react-server-components",
  "next-transform-strip-page-exports",
  "once_cell",
  "qstring",
@@ -4157,7 +4158,9 @@ dependencies = [
  "either",
  "fxhash",
  "hex",
+ "next-transform-cjs-finder",
  "next-transform-font",
+ "next-transform-react-server-components",
  "once_cell",
  "pathdiff",
  "regex",
@@ -4201,6 +4204,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "next-transform-cjs-finder"
+version = "0.1.0"
+dependencies = [
+ "turbopack-binding",
+]
+
+[[package]]
 name = "next-transform-dynamic"
 version = "0.1.0"
 dependencies = [
@@ -4217,6 +4227,17 @@ dependencies = [
  "serde",
  "serde_json",
  "swc_core",
+]
+
+[[package]]
+name = "next-transform-react-server-components"
+version = "0.1.0"
+dependencies = [
+ "next-transform-cjs-finder",
+ "regex",
+ "serde",
+ "swc_core",
+ "turbopack-binding",
 ]
 
 [[package]]

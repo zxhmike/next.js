@@ -1,0 +1,20 @@
+[package]
+name = "next-transform-react-server-components"
+version = "0.1.0"
+description = "TBD"
+license = "MPL-2.0"
+edition = "2021"
+
+[lib]
+bench = false
+
+[dependencies]
+serde = { workspace = true }
+regex = { workspace = true }
+
+swc_core = { workspace = true }
+next-transform-cjs-finder = { workspace = true }
+turbopack-binding = { workspace = true, features = [
+  "__swc_core",
+] }
+

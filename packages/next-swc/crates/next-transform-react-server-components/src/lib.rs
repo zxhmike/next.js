@@ -1,12 +1,14 @@
 use std::{collections::HashMap, path::PathBuf};
 
+use next_transform_cjs_finder::contains_cjs;
 use regex::Regex;
 use serde::Deserialize;
+use swc_core::quote;
 use turbopack_binding::swc::core::{
     common::{
         comments::{Comment, CommentKind, Comments},
         errors::HANDLER,
-        FileName, Span, Spanned, DUMMY_SP,
+        Span, Spanned, DUMMY_SP,
     },
     ecma::{
         ast::*,
@@ -15,8 +17,6 @@ use turbopack_binding::swc::core::{
         visit::{as_folder, noop_visit_mut_type, Fold, VisitMut, VisitMutWith},
     },
 };
-
-use crate::auto_cjs::contains_cjs;
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(untagged)]
@@ -51,6 +51,7 @@ struct ReactServerComponents<C: Comments> {
     invalid_server_react_apis: Vec<JsWord>,
     invalid_server_react_dom_apis: Vec<JsWord>,
     bundle_target: String,
+    esm_module_ref: bool,
 }
 
 struct ModuleImports {
@@ -68,7 +69,12 @@ impl<C: Comments> VisitMut for ReactServerComponents<C> {
 
         if self.is_server {
             if is_client_entry {
-                self.to_module_ref(module, is_cjs);
+                if self.esm_module_ref {
+                    self.to_esm_module_ref(module, is_cjs);
+                } else {
+                    self.to_module_ref(module, is_cjs);
+                }
+
                 return;
             } else if self.bundle_target == "server" {
                 // Only assert server graph if file's bundle target is "server", e.g.
@@ -279,6 +285,92 @@ impl<C: Comments> ReactServerComponents<C> {
         });
 
         (is_client_entry, is_action_file, imports)
+    }
+
+    fn to_esm_module_ref(&self, module: &mut Module, is_cjs: bool) {
+        // Clear all the statements and module declarations.
+        module.body.clear();
+
+        let proxy_ident = quote_ident!("createProxy");
+        let filepath = quote_str!(&*self.filepath);
+
+        prepend_stmts(
+            &mut module.body,
+            vec![
+                //import { createProxy } from "${MODULE_PROXY_PATH}"
+                ModuleItem::ModuleDecl(ModuleDecl::Import(ImportDecl {
+                    span: DUMMY_SP,
+                    type_only: false,
+                    with: None,
+                    specifiers: vec![ImportSpecifier::Named(ImportNamedSpecifier {
+                        span: DUMMY_SP,
+                        local: proxy_ident,
+                        imported: None,
+                        is_type_only: false,
+                    })],
+                    src: Box::new(
+                        "next/dist/build/webpack/loaders/next-flight-loader/module-proxy".into(),
+                    ),
+                })),
+                // const proxy = createProxy(String.raw\`${this.resourcePath}\`)
+                ModuleItem::Stmt(Stmt::Decl(Decl::Var(Box::new(VarDecl {
+                    span: DUMMY_SP,
+                    kind: VarDeclKind::Const,
+                    declare: false,
+                    decls: vec![VarDeclarator {
+                        span: DUMMY_SP,
+                        name: Pat::Object(ObjectPat {
+                            span: DUMMY_SP,
+                            props: vec![ObjectPatProp::Assign(AssignPatProp {
+                                span: DUMMY_SP,
+                                key: Ident::new("proxy".into(), DUMMY_SP),
+                                value: None,
+                            })],
+                            optional: false,
+                            type_ann: None,
+                        }),
+                        init: Some(Box::new(Expr::Call(CallExpr {
+                            span: DUMMY_SP,
+                            callee: quote_ident!("createProxy").as_callee(),
+                            args: vec![filepath.as_arg()],
+                            type_args: Default::default(),
+                        }))),
+                        definite: false,
+                    }],
+                })))),
+                ModuleItem::Stmt(quote!("const { __esModule, $$typeof } = proxy;" as Stmt)),
+                ModuleItem::Stmt(quote!("const __default__ = proxy.default;" as Stmt)),
+                //ModuleItem::ModuleDecl(quote!("export { __esModule, $$typeof };" as
+                // ExportDeclaration))
+                ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(NamedExport {
+                    span: DUMMY_SP,
+                    with: None,
+                    specifiers: vec![
+                        ExportSpecifier::Named(ExportNamedSpecifier {
+                            span: DUMMY_SP,
+                            orig: Ident::new("__esModule".into(), DUMMY_SP).into(),
+                            exported: None,
+                            is_type_only: false,
+                        }),
+                        ExportSpecifier::Named(ExportNamedSpecifier {
+                            span: DUMMY_SP,
+                            orig: Ident::new("$$typeof".into(), DUMMY_SP).into(),
+                            exported: None,
+                            is_type_only: false,
+                        }),
+                    ],
+                    src: None,
+                    type_only: false,
+                })),
+                ModuleItem::ModuleDecl(ModuleDecl::ExportDefaultExpr(ExportDefaultExpr {
+                    span: DUMMY_SP,
+                    expr: Box::new(Expr::Ident(Ident::new("__default__".into(), DUMMY_SP))),
+                })),
+            ]
+            .into_iter(),
+        );
+
+        self.prepend_comment_node(module, is_cjs);
     }
 
     // Convert the client module to the module reference code and add a special
@@ -565,20 +657,22 @@ impl<C: Comments> ReactServerComponents<C> {
 }
 
 pub fn server_components<C: Comments>(
-    filename: FileName,
+    filename: String,
     config: Config,
     comments: C,
     app_dir: Option<PathBuf>,
     bundle_target: JsWord,
+    esm_module_ref: bool,
 ) -> impl Fold + VisitMut {
     let is_server: bool = match &config {
         Config::WithOptions(x) => x.is_server,
         _ => true,
     };
     as_folder(ReactServerComponents {
+        esm_module_ref,
         is_server,
         comments,
-        filepath: filename.to_string(),
+        filepath: filename,
         bundle_target: bundle_target.to_string(),
         app_dir,
         export_names: vec![],

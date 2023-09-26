@@ -7,12 +7,14 @@ pub(crate) mod relay;
 pub(crate) mod styled_components;
 pub(crate) mod styled_jsx;
 pub(crate) mod swc_ecma_transform_plugins;
+pub(crate) mod react_server_components;
 
 pub use modularize_imports::{get_next_modularize_imports_rule, ModularizeImportPackageConfig};
 pub use next_dynamic::get_next_dynamic_transform_rule;
 pub use next_font::get_next_font_transform_rule;
 pub use next_strip_page_exports::get_next_pages_transforms_rule;
 pub use relay::get_relay_transform_plugin;
+pub use react_server_components::get_react_server_components_transform_plugin;
 use turbo_tasks::{Value, Vc};
 use turbopack_binding::turbopack::{
     core::reference_type::{ReferenceType, UrlReferenceSubType},

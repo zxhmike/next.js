@@ -51,8 +51,8 @@ use crate::{
             NextNodeSharedRuntimeResolvePlugin, UnsupportedModulesResolvePlugin,
         },
         transforms::{
-            emotion::get_emotion_transform_plugin, get_relay_transform_plugin,
-            styled_components::get_styled_components_transform_plugin,
+            emotion::get_emotion_transform_plugin, get_react_server_components_transform_plugin,
+            get_relay_transform_plugin, styled_components::get_styled_components_transform_plugin,
             styled_jsx::get_styled_jsx_transform_plugin,
             swc_ecma_transform_plugins::get_swc_ecma_transform_plugin,
         },
@@ -268,7 +268,15 @@ pub async fn get_server_module_options_context(
     let jsx_runtime_options =
         get_jsx_transform_options(project_path, mode, None, true, next_config);
 
+    let is_app_dir = if let ServerContextType::AppRSC { .. } = *ty {
+        true
+    } else {
+        false
+
+    };
+
     let source_transforms: Vec<Vc<TransformPlugin>> = vec![
+        *get_react_server_components_transform_plugin(project_path, is_app_dir, true, Vc::cell("server".to_string())).await?,
         *get_swc_ecma_transform_plugin(project_path, next_config).await?,
         *get_relay_transform_plugin(next_config).await?,
         *get_emotion_transform_plugin(next_config).await?,
