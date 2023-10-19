@@ -1,5 +1,6 @@
 import type { OutgoingHttpHeaders } from 'http'
 import type RenderResult from '../render-result'
+import type { Revalidate } from '../lib/revalidate'
 
 export interface ResponseCacheBase {
   get(
@@ -20,6 +21,8 @@ export interface CachedFetchValue {
     body: string
     url: string
     status?: number
+    // tags are only present with file-system-cache
+    // fetch cache stores tags outside of cache entry
     tags?: string[]
   }
   revalidate: number
@@ -91,7 +94,7 @@ export type ResponseCacheValue =
   | CachedRouteValue
 
 export type ResponseCacheEntry = {
-  revalidate?: number | false
+  revalidate?: Revalidate
   value: ResponseCacheValue | null
   isStale?: boolean | -1
   isMiss?: boolean
@@ -112,10 +115,13 @@ export type IncrementalCacheItem = {
 } | null
 
 export interface IncrementalCache {
-  get: (key: string) => Promise<IncrementalCacheItem>
+  get: (
+    key: string,
+    ctx?: { fetchCache?: boolean }
+  ) => Promise<IncrementalCacheItem>
   set: (
     key: string,
     data: IncrementalCacheValue | null,
-    revalidate?: number | false
+    ctx: { revalidate: Revalidate }
   ) => Promise<void>
 }

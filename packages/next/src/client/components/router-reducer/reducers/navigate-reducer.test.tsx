@@ -1,6 +1,18 @@
 import React from 'react'
 import type { fetchServerResponse as fetchServerResponseType } from '../fetch-server-response'
 import type { FlightData } from '../../../../server/app-render/types'
+import type { FlightRouterState } from '../../../../server/app-render/types'
+import { CacheStates } from '../../../../shared/lib/app-router-context.shared-runtime'
+import type { CacheNode } from '../../../../shared/lib/app-router-context.shared-runtime'
+import { createInitialRouterState } from '../create-initial-router-state'
+import {
+  ACTION_NAVIGATE,
+  ACTION_PREFETCH,
+  PrefetchKind,
+} from '../router-reducer-types'
+import type { NavigateAction, PrefetchAction } from '../router-reducer-types'
+import { navigateReducer } from './navigate-reducer'
+import { prefetchReducer } from './prefetch-reducer'
 
 const buildId = 'development'
 
@@ -75,22 +87,6 @@ jest.mock('../fetch-server-response', () => {
   }
 })
 
-import { FlightRouterState } from '../../../../server/app-render/types'
-import {
-  CacheNode,
-  CacheStates,
-} from '../../../../shared/lib/app-router-context'
-import { createInitialRouterState } from '../create-initial-router-state'
-import {
-  NavigateAction,
-  ACTION_NAVIGATE,
-  ACTION_PREFETCH,
-  PrefetchAction,
-  PrefetchKind,
-} from '../router-reducer-types'
-import { navigateReducer } from './navigate-reducer'
-import { prefetchReducer } from './prefetch-reducer'
-
 const getInitialRouterStateTree = (): FlightRouterState => [
   '',
   {
@@ -105,6 +101,10 @@ const getInitialRouterStateTree = (): FlightRouterState => [
   undefined,
   true,
 ]
+
+const globalMutable = {
+  refresh: () => {},
+}
 
 async function runPromiseThrowChain(fn: any): Promise<any> {
   try {
@@ -194,7 +194,7 @@ describe('navigateReducer', () => {
         subTreeData: null,
         parallelRoutes: new Map(),
       },
-      mutable: {},
+      mutable: { globalMutable },
     }
 
     const newState = await runPromiseThrowChain(() =>
@@ -438,7 +438,7 @@ describe('navigateReducer', () => {
         subTreeData: null,
         parallelRoutes: new Map(),
       },
-      mutable: {},
+      mutable: { globalMutable },
     }
 
     await runPromiseThrowChain(() => navigateReducer(state, action))
@@ -633,7 +633,7 @@ describe('navigateReducer', () => {
         subTreeData: null,
         parallelRoutes: new Map(),
       },
-      mutable: {},
+      mutable: { globalMutable },
     }
 
     await runPromiseThrowChain(() => navigateReducer(state, action))
@@ -792,7 +792,7 @@ describe('navigateReducer', () => {
         subTreeData: null,
         parallelRoutes: new Map(),
       },
-      mutable: {},
+      mutable: { globalMutable },
     }
 
     await runPromiseThrowChain(() => navigateReducer(state, action))
@@ -948,7 +948,7 @@ describe('navigateReducer', () => {
         subTreeData: null,
         parallelRoutes: new Map(),
       },
-      mutable: {},
+      mutable: { globalMutable },
     }
 
     await runPromiseThrowChain(() => navigateReducer(state, action))
@@ -1147,7 +1147,7 @@ describe('navigateReducer', () => {
         subTreeData: null,
         parallelRoutes: new Map(),
       },
-      mutable: {},
+      mutable: { globalMutable },
     }
 
     await runPromiseThrowChain(() => navigateReducer(state, action))
@@ -1317,7 +1317,7 @@ describe('navigateReducer', () => {
         subTreeData: null,
         parallelRoutes: new Map(),
       },
-      mutable: {},
+      mutable: { globalMutable },
     }
 
     await runPromiseThrowChain(() => navigateReducer(state, action))
@@ -1630,7 +1630,7 @@ describe('navigateReducer', () => {
         subTreeData: null,
         parallelRoutes: new Map(),
       },
-      mutable: {},
+      mutable: { globalMutable },
     }
 
     await runPromiseThrowChain(() => navigateReducer(state, action))
@@ -1841,6 +1841,7 @@ describe('navigateReducer', () => {
         hashFragment: '#hash',
         pendingPush: true,
         shouldScroll: true,
+        globalMutable,
       },
     }
 
@@ -1983,7 +1984,7 @@ describe('navigateReducer', () => {
         subTreeData: null,
         parallelRoutes: new Map(),
       },
-      mutable: {},
+      mutable: { globalMutable },
     }
 
     const newState = await runPromiseThrowChain(() =>

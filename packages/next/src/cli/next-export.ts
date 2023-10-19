@@ -1,31 +1,18 @@
 #!/usr/bin/env node
+import type { ExportAppOptions } from '../export/types'
+
 import { resolve, join } from 'path'
 import { existsSync } from 'fs'
-import arg from 'next/dist/compiled/arg/index.js'
-import chalk from 'next/dist/compiled/chalk'
-import exportApp, { ExportError, ExportOptions } from '../export'
+import { cyan } from '../lib/picocolors'
+import exportApp, { ExportError } from '../export'
 import * as Log from '../build/output/log'
 import { printAndExit } from '../server/lib/utils'
-import { CliCommand } from '../lib/commands'
+import type { CliCommand } from '../lib/commands'
 import { trace } from '../trace'
 import { getProjectDir } from '../lib/get-project-dir'
-import { getValidatedArgs } from '../lib/get-validated-args'
 
-const nextExport: CliCommand = (argv) => {
+const nextExport: CliCommand = (args) => {
   const nextExportCliSpan = trace('next-export-cli')
-  const validArgs: arg.Spec = {
-    // Types
-    '--help': Boolean,
-    '--silent': Boolean,
-    '--outdir': String,
-    '--threads': Number,
-
-    // Aliases
-    '-h': '--help',
-    '-o': '--outdir',
-    '-s': '--silent',
-  }
-  const args = getValidatedArgs(validArgs, argv)
   if (args['--help']) {
     console.log(`
       Description
@@ -44,7 +31,7 @@ const nextExport: CliCommand = (argv) => {
        --help, -h    List this help
 
       The "next export" command is deprecated in favor of "output: export" in next.config.js
-      Learn more: ${chalk.cyan(
+      Learn more: ${cyan(
         'https://nextjs.org/docs/advanced-features/static-html-export'
       )}
     `)
@@ -58,7 +45,7 @@ const nextExport: CliCommand = (argv) => {
     printAndExit(`> No such directory exists as the project root: ${dir}`)
   }
 
-  const options: ExportOptions = {
+  const options: ExportAppOptions = {
     silent: args['--silent'] || false,
     threads: args['--threads'],
     outdir: args['--outdir'] ? resolve(args['--outdir']) : join(dir, 'out'),

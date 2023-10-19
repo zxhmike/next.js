@@ -66,6 +66,13 @@ createNextDescribe(
           "
         `)
       })
+
+      it('should not throw if client components are imported but not used', async () => {
+        const { status } = await next.fetch(
+          '/client-ref-dependency/sitemap.xml'
+        )
+        expect(status).toBe(200)
+      })
     })
 
     describe('social image routes', () => {
@@ -114,6 +121,23 @@ createNextDescribe(
           isNextDev ? CACHE_HEADERS.NONE : CACHE_HEADERS.LONG
         )
 
+        if (isNextDev) {
+          await check(async () => {
+            next.hasFile('.next/server/app-paths-manifest.json')
+            return 'success'
+          }, /success/)
+
+          const appPathsManifest = JSON.parse(
+            await next.readFile('.next/server/app-paths-manifest.json')
+          )
+          const entryKeys = Object.keys(appPathsManifest)
+          // Only has one route for twitter-image with catch-all routes in dev
+          expect(entryKeys).not.toContain('/twitter-image')
+          expect(entryKeys).toContain(
+            '/twitter-image/[[...__metadata_id__]]/route'
+          )
+        }
+
         // edge runtime
         res = await next.fetch('/twitter-image2')
         expect(res.headers.get('content-type')).toBe('image/png')
@@ -128,7 +152,7 @@ createNextDescribe(
           .toArray()
           .map((el) => {
             return {
-              href: $(el).attr('href').split('?')[0],
+              href: $(el).attr('href').split('?', 1)[0],
               sizes: $(el).attr('sizes'),
               type: $(el).attr('type'),
             }
@@ -151,7 +175,7 @@ createNextDescribe(
           .toArray()
           .map((el) => {
             return {
-              href: $(el).attr('href').split('?')[0],
+              href: $(el).attr('href').split('?', 1)[0],
               sizes: $(el).attr('sizes'),
               type: $(el).attr('type'),
             }
@@ -255,6 +279,25 @@ createNextDescribe(
         )
       })
     })
+
+    if (isNextStart) {
+      describe('route segment config', () => {
+        it('should generate dynamic route if dynamic config is force-dynamic', async () => {
+          const dynamicRoute = '/route-config/sitemap.xml'
+
+          expect(
+            await next.hasFile(`.next/server/app${dynamicRoute}/route.js`)
+          ).toBe(true)
+          // dynamic routes should not have body and meta files
+          expect(
+            await next.hasFile(`.next/server/app${dynamicRoute}.body`)
+          ).toBe(false)
+          expect(
+            await next.hasFile(`.next/server/app${dynamicRoute}.meta`)
+          ).toBe(false)
+        })
+      })
+    }
 
     it('should generate unique path for image routes under group routes', async () => {
       const $ = await next.render$('/blog')
@@ -372,7 +415,7 @@ createNextDescribe(
       it('should error when id is missing in generateImageMetadata', async () => {
         const iconFilePath = 'app/metadata-base/unset/icon.tsx'
         const contentMissingIdProperty = `
-        import { ImageResponse } from 'next/server'
+        import { ImageResponse } from 'next/og'
         export async function generateImageMetadata() {
           return [
             {

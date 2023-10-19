@@ -1,5 +1,5 @@
 import { DynamicServerError } from './hooks-server-context'
-import { staticGenerationAsyncStorage } from './static-generation-async-storage'
+import { staticGenerationAsyncStorage } from './static-generation-async-storage.external'
 
 class StaticGenBailoutError extends Error {
   code = 'NEXT_STATIC_GEN_BAILOUT'
@@ -38,6 +38,12 @@ export const staticGenerationBailout: StaticGenerationBailout = (
 
   if (staticGenerationStore) {
     staticGenerationStore.revalidate = 0
+
+    if (!opts?.dynamic) {
+      // we can statically prefetch pages that opt into dynamic,
+      // but not things like headers/cookies
+      staticGenerationStore.staticPrefetchBailout = true
+    }
   }
 
   if (staticGenerationStore?.isStaticGeneration) {
