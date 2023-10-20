@@ -8,10 +8,10 @@ use swc_core::{
     common::{errors::HANDLER, FileName, Span, DUMMY_SP},
     ecma::{
         ast::{
-            ArrayLit, ArrowExpr, BlockStmtOrExpr, Bool, CallExpr, Callee, Expr, ExprOrSpread,
-            ExprStmt, Id, Ident, ImportDecl, ImportDefaultSpecifier, ImportNamedSpecifier,
-            ImportSpecifier, KeyValueProp, Lit, ModuleDecl, ModuleItem, Null, ObjectLit, Prop,
-            PropName, PropOrSpread, Stmt, Str, Tpl,
+            op, ArrayLit, ArrowExpr, BinExpr, BinaryOp, BlockStmt, BlockStmtOrExpr, Bool, CallExpr,
+            Callee, Expr, ExprOrSpread, ExprStmt, Id, Ident, ImportDecl, ImportDefaultSpecifier,
+            ImportNamedSpecifier, ImportSpecifier, KeyValueProp, Lit, ModuleDecl, ModuleItem, Null,
+            ObjectLit, Prop, PropName, PropOrSpread, Stmt, Str, Tpl, UnaryExpr, UnaryOp,
         },
         utils::{private_ident, ExprFactory},
         visit::{Fold, FoldWith},
@@ -326,7 +326,6 @@ impl Fold for NextDynamicPatcher {
                         })))];
 
                     let mut has_ssr_false = false;
-                    let mut has_suspense = false;
 
                     if expr.args.len() == 2 {
                         if let Expr::Object(ObjectLit {
@@ -359,15 +358,15 @@ impl Fold for NextDynamicPatcher {
                                                 has_ssr_false = true
                                             }
                                         }
-                                        if sym == "suspense" {
-                                            if let Some(Lit::Bool(Bool {
-                                                value: true,
-                                                span: _,
-                                            })) = value.as_lit()
-                                            {
-                                                has_suspense = true
-                                            }
-                                        }
+                                        // if sym == "suspense" {
+                                        //     if let Some(Lit::Bool(Bool {
+                                        //         value: true,
+                                        //         span: _,
+                                        //     })) = value.as_lit()
+                                        //     {
+                                        //         has_suspense = true
+                                        //     }
+                                        // }
                                     }
                                 }
                             }
@@ -381,12 +380,54 @@ impl Fold for NextDynamicPatcher {
                     // Also don't strip the `loader` argument for server components (both
                     // server/client layers), since they're aliased to a
                     // React.lazy implementation.
-                    if has_ssr_false
-                        && !has_suspense
-                        && self.is_server_compiler
-                        && !self.is_react_server_layer
-                    {
-                        expr.args[0] = Lit::Null(Null { span: DUMMY_SP }).as_arg();
+                    // if has_ssr_false
+                    //     && !has_suspense
+                    //     && self.is_server
+                    //     && !self.is_server_components
+                    // {
+                    //     expr.args[0] = Lit::Null(Null { span: DUMMY_SP }).as_arg();
+                    // }
+
+                    if has_ssr_false && self.is_server_compiler {
+                        // if it's server components SSR layer
+                        if !self.is_react_server_layer {
+                            // Transform 1st argument `expr.args[0]` aka the module loader to:
+                            // `typeof window !== 'window' && (() => {
+                            //    expr.args[0]
+                            // })`
+                            // For instance:
+                            // dynamic(`typeof window !== 'window' && (() => {
+                            //   /**
+                            //    * this will make sure we can traverse the module first but will be
+                            //    * tree-shake out in server bundle */
+                            //   () => import('./client-mod')
+                            // }), { ssr: false })
+                            let side_effect_free_loader_arg = Expr::Arrow(ArrowExpr {
+                                span: DUMMY_SP,
+                                params: vec![],
+                                body: Box::new(BlockStmtOrExpr::BlockStmt(BlockStmt {
+                                    span: DUMMY_SP,
+                                    stmts: vec![
+                                        // loader is still inside the module but not executed,
+                                        // then it will be removed by tree-shaking.
+                                        Stmt::Expr(ExprStmt {
+                                            span: DUMMY_SP,
+                                            expr: expr.args[0].expr.clone(),
+                                        }),
+                                    ],
+                                })),
+                                is_async: true,
+                                is_generator: false,
+                                type_params: None,
+                                return_type: None,
+                            });
+
+                            expr.args[0] = side_effect_free_loader_arg.as_arg();
+                            //  .as_arg();
+                        }
+                        // else {
+                        //     expr.args[0] = Lit::Null(Null { span: DUMMY_SP
+                        // }).as_arg(); }
                     }
 
                     let second_arg = ExprOrSpread {
@@ -577,6 +618,42 @@ impl NextDynamicPatcher {
 
         std::mem::swap(&mut new_items, items)
     }
+}
+
+// Receive an expression and return `typeof window !== 'undefined' &&
+// <expression>`, to make the expression is tree-shakable on server side but
+// still remain in module graph.
+fn wrap_expr_with_client_only_cond(wrapped_expr: &Expr) -> Expr {
+    let typeof_expr = Expr::Unary(UnaryExpr {
+        span: DUMMY_SP,
+        op: UnaryOp::TypeOf, // 'typeof' operator
+        arg: Box::new(Expr::Ident(Ident {
+            span: DUMMY_SP,
+            sym: "window".into(),
+            optional: false,
+        })),
+    });
+    let undefined_literal = Expr::Lit(Lit::Str(Str {
+        span: DUMMY_SP,
+        value: "undefined".into(),
+        raw: None,
+    }));
+    let inequality_expr = Expr::Bin(BinExpr {
+        span: DUMMY_SP,
+        left: Box::new(typeof_expr),
+        op: BinaryOp::NotEq, // '!=='
+        right: Box::new(undefined_literal),
+    });
+
+    // Create the LogicalExpr 'typeof window !== "undefined" && x'
+    let logical_expr = Expr::Bin(BinExpr {
+        span: DUMMY_SP,
+        op: op!("&&"), // '&&' operator
+        left: Box::new(inequality_expr),
+        right: Box::new(wrapped_expr.clone()),
+    });
+
+    logical_expr
 }
 
 fn rel_filename(base: Option<&Path>, file: &FileName) -> String {

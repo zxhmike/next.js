@@ -185,6 +185,16 @@ where
         },
     };
 
+    let (has_server_components, is_rsc_server_layer) = match &opts.server_components {
+        Some(config) if config.truthy() => match config {
+            // Always enable the Server Components mode for both
+            // server and client layers.
+            react_server_components::Config::WithOptions(config) => (true, config.is_server),
+            _ => (false, false),
+        },
+        _ => (false, false),
+    };
+
     chain!(
         disallow_re_export_all_in_page::disallow_re_export_all_in_page(opts.is_page_file),
         match &opts.server_components {
@@ -226,15 +236,7 @@ where
         next_dynamic(
             opts.is_development,
             opts.is_server_compiler,
-            match &opts.server_components {
-                Some(config) if config.truthy() => match config {
-                    // Always enable the Server Components mode for both
-                    // server and client layers.
-                    react_server_components::Config::WithOptions(_) => true,
-                    _ => false,
-                },
-                _ => false,
-            },
+            is_rsc_server_layer,
             NextDynamicMode::Webpack,
             file.name.clone(),
             opts.pages_dir.clone()
