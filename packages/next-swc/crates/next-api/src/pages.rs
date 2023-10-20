@@ -39,7 +39,7 @@ use turbopack_binding::{
         build::BuildChunkingContext,
         core::{
             asset::AssetContent,
-            chunk::{availability_info::AvailabilityInfo, ChunkingContext, EvaluatableAssets},
+            chunk::{availability_info::AvailabilityInfo, ChunkingContextExt, EvaluatableAssets},
             context::AssetContext,
             file_source::FileSource,
             issue::IssueSeverity,
@@ -563,7 +563,7 @@ impl PageEndpoint {
         let client_chunking_context = this.pages_project.project().client_chunking_context();
 
         let mut client_chunks = client_chunking_context
-            .evaluated_chunk_group(
+            .evaluated_chunk_group_assets(
                 client_module.ident(),
                 this.pages_project
                     .client_runtime_entries()
@@ -621,7 +621,7 @@ impl PageEndpoint {
             };
             evaluatable_assets.push(evaluatable);
 
-            let edge_files = edge_chunking_context.evaluated_chunk_group(
+            let edge_files = edge_chunking_context.evaluated_chunk_group_assets(
                 ssr_module.ident(),
                 Vc::cell(evaluatable_assets.clone()),
                 Value::new(AvailabilityInfo::Root),
@@ -655,12 +655,15 @@ impl PageEndpoint {
 
             let ssr_entry_chunk_path_string = format!("pages{asset_path}");
             let ssr_entry_chunk_path = node_path.join(ssr_entry_chunk_path_string);
-            let ssr_entry_chunk = chunking_context.entry_chunk_group(
-                ssr_entry_chunk_path,
-                ssr_module,
-                runtime_entries,
-                Value::new(AvailabilityInfo::Root),
-            );
+            let ssr_entry_chunk = chunking_context
+                .entry_chunk_group(
+                    ssr_entry_chunk_path,
+                    ssr_module,
+                    runtime_entries,
+                    Value::new(AvailabilityInfo::Root),
+                )
+                .await?
+                .asset;
 
             let availability_info = Value::new(AvailabilityInfo::Root);
             let dynamic_import_modules = collect_next_dynamic_imports(ssr_module).await?;

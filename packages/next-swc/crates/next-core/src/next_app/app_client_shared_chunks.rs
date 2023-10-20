@@ -2,7 +2,7 @@ use anyhow::Result;
 use turbo_tasks::{Value, Vc};
 use turbopack_binding::turbopack::{
     core::{
-        chunk::{availability_info::AvailabilityInfo, ChunkingContext, EvaluatableAssets},
+        chunk::{availability_info::AvailabilityInfo, ChunkingContextExt, EvaluatableAssets},
         ident::AssetIdent,
         output::OutputAssets,
     },
@@ -19,7 +19,7 @@ pub async fn get_app_client_shared_chunks(
         return Ok(OutputAssets::empty());
     }
 
-    let app_client_shared_chunks = client_chunking_context.evaluated_chunk_group(
+    let app_client_shared_chunks = client_chunking_context.evaluated_chunk_group_assets(
         ident,
         app_client_runtime_entries,
         Value::new(AvailabilityInfo::Root),

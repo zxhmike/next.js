@@ -44,10 +44,10 @@ pub async fn get_app_client_references_chunks(
                     ClientReferenceType::EcmascriptClientReference(ecmascript_client_reference) => {
                         let ecmascript_client_reference_ref = ecmascript_client_reference.await?;
                         ClientReferenceChunks {
-                            client_chunks: client_chunking_context.root_chunk_group(Vc::upcast(
-                                ecmascript_client_reference_ref.client_module,
-                            )),
-                            ssr_chunks: ssr_chunking_context.root_chunk_group(Vc::upcast(
+                            client_chunks: client_chunking_context.root_chunk_group_assets(
+                                Vc::upcast(ecmascript_client_reference_ref.client_module),
+                            ),
+                            ssr_chunks: ssr_chunking_context.root_chunk_group_assets(Vc::upcast(
                                 ecmascript_client_reference_ref.ssr_module,
                             )),
                         }
@@ -55,9 +55,9 @@ pub async fn get_app_client_references_chunks(
                     ClientReferenceType::CssClientReference(css_client_reference) => {
                         let css_client_reference_ref = css_client_reference.await?;
                         ClientReferenceChunks {
-                            client_chunks: client_chunking_context.root_chunk_group(Vc::upcast(
-                                css_client_reference_ref.client_module,
-                            )),
+                            client_chunks: client_chunking_context.root_chunk_group_assets(
+                                Vc::upcast(css_client_reference_ref.client_module),
+                            ),
                             ssr_chunks: OutputAssets::empty(),
                         }
                     }

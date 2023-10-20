@@ -295,15 +295,18 @@ pub async fn compute_app_entries_chunks(
             .entry(Vc::upcast(app_entry.rsc_entry))
             .await?;
 
-        let rsc_chunk = rsc_chunking_context.entry_chunk_group(
-            node_root.join(format!(
-                "server/app/{original_name}.js",
-                original_name = app_entry.original_name
-            )),
-            app_entry.rsc_entry,
-            app_entries.rsc_runtime_entries,
-            Value::new(AvailabilityInfo::Root),
-        );
+        let rsc_chunk = rsc_chunking_context
+            .entry_chunk_group(
+                node_root.join(format!(
+                    "server/app/{original_name}.js",
+                    original_name = app_entry.original_name
+                )),
+                app_entry.rsc_entry,
+                app_entries.rsc_runtime_entries,
+                Value::new(AvailabilityInfo::Root),
+            )
+            .await?
+            .asset;
         all_chunks.push(rsc_chunk);
 
         let mut app_entry_client_chunks = vec![];
