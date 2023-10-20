@@ -394,6 +394,7 @@ pub async fn compute_page_entries_chunks(
             node_root.join(format!("server/pages/{asset_path}")),
             Vc::upcast(page_entry.ssr_module),
             page_entries.ssr_runtime_entries,
+            Value::new(AvailabilityInfo::Root),
         );
         all_chunks.push(ssr_entry_chunk);
 

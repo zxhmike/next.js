@@ -933,6 +933,7 @@ impl AppEndpoint {
                         )),
                         app_entry.rsc_entry,
                         Vc::cell(evaluatable_assets),
+                        Value::new(AvailabilityInfo::Root),
                     );
                 server_assets.push(rsc_chunk);
 

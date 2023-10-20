@@ -27,7 +27,7 @@ use turbopack_binding::{
     turbopack::{
         build::BuildChunkingContext,
         core::{
-            chunk::{ChunkingContext, EvaluatableAssets},
+            chunk::{availability_info::AvailabilityInfo, ChunkingContext, EvaluatableAssets},
             compile_time_info::CompileTimeInfo,
             file_source::FileSource,
             ident::AssetIdent,
@@ -302,6 +302,7 @@ pub async fn compute_app_entries_chunks(
             )),
             app_entry.rsc_entry,
             app_entries.rsc_runtime_entries,
+            Value::new(AvailabilityInfo::Root),
         );
         all_chunks.push(rsc_chunk);
 
