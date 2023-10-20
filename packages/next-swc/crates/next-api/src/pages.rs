@@ -39,7 +39,10 @@ use turbopack_binding::{
         build::BuildChunkingContext,
         core::{
             asset::AssetContent,
-            chunk::{availability_info::AvailabilityInfo, ChunkingContextExt, EvaluatableAssets},
+            chunk::{
+                availability_info::AvailabilityInfo, ChunkGroupResult, ChunkingContext,
+                ChunkingContextExt, EvaluatableAssets,
+            },
             context::AssetContext,
             file_source::FileSource,
             issue::IssueSeverity,
@@ -154,20 +157,24 @@ impl PagesProject {
             .await?;
         }
 
+        let app_endpoint = self.app_endpoint_internal().resolve().await?;
+
         let make_page_route = |pathname, original_name, path| Route::Page {
-            html_endpoint: Vc::upcast(PageEndpoint::new(
+            html_endpoint: Vc::upcast(PageEndpoint::new_with_depend_on(
                 PageEndpointType::Html,
                 self,
                 pathname,
                 original_name,
                 path,
+                app_endpoint,
             )),
-            data_endpoint: Vc::upcast(PageEndpoint::new(
+            data_endpoint: Vc::upcast(PageEndpoint::new_with_depend_on(
                 PageEndpointType::Data,
                 self,
                 pathname,
                 original_name,
                 path,
+                app_endpoint,
             )),
         };
 
@@ -183,7 +190,7 @@ impl PagesProject {
         self: Vc<Self>,
         item: Vc<PagesStructureItem>,
         ty: PageEndpointType,
-    ) -> Result<Vc<Box<dyn Endpoint>>> {
+    ) -> Result<Vc<PageEndpoint>> {
         let PagesStructureItem {
             next_router_path,
             project_path,
@@ -193,32 +200,37 @@ impl PagesProject {
         let pathname_vc = Vc::cell(pathname.clone());
         let original_name = Vc::cell(format!("/{}", original_path.await?.path));
         let path = project_path;
-        let endpoint = Vc::upcast(PageEndpoint::new(
-            ty,
-            self,
-            pathname_vc,
-            original_name,
-            path,
-        ));
+        let endpoint = PageEndpoint::new(ty, self, pathname_vc, original_name, path);
         Ok(endpoint)
     }
 
     #[turbo_tasks::function]
     pub async fn document_endpoint(self: Vc<Self>) -> Result<Vc<Box<dyn Endpoint>>> {
-        Ok(self.to_endpoint(
+        Ok(Vc::upcast(self.to_endpoint(
             self.pages_structure().await?.document,
             PageEndpointType::SsrOnly,
-        ))
+        )))
     }
 
     #[turbo_tasks::function]
-    pub async fn app_endpoint(self: Vc<Self>) -> Result<Vc<Box<dyn Endpoint>>> {
+    async fn app_endpoint_internal(self: Vc<Self>) -> Result<Vc<PageEndpoint>> {
         Ok(self.to_endpoint(self.pages_structure().await?.app, PageEndpointType::Html))
     }
 
     #[turbo_tasks::function]
+    pub async fn app_endpoint(self: Vc<Self>) -> Result<Vc<Box<dyn Endpoint>>> {
+        Ok(Vc::upcast(self.to_endpoint(
+            self.pages_structure().await?.app,
+            PageEndpointType::Html,
+        )))
+    }
+
+    #[turbo_tasks::function]
     pub async fn error_endpoint(self: Vc<Self>) -> Result<Vc<Box<dyn Endpoint>>> {
-        Ok(self.to_endpoint(self.pages_structure().await?.error, PageEndpointType::Html))
+        Ok(Vc::upcast(self.to_endpoint(
+            self.pages_structure().await?.error,
+            PageEndpointType::Html,
+        )))
     }
 
     #[turbo_tasks::function]
@@ -483,6 +495,7 @@ struct PageEndpoint {
     pathname: Vc<String>,
     original_name: Vc<String>,
     path: Vc<FileSystemPath>,
+    depend_on: Option<Vc<PageEndpoint>>,
 }
 
 #[derive(Copy, Clone, Serialize, Deserialize, PartialEq, Eq, Debug, TaskInput, TraceRawVcs)]
@@ -509,6 +522,27 @@ impl PageEndpoint {
             pathname,
             original_name,
             path,
+            depend_on: None,
+        }
+        .cell()
+    }
+
+    #[turbo_tasks::function]
+    fn new_with_depend_on(
+        ty: PageEndpointType,
+        pages_project: Vc<PagesProject>,
+        pathname: Vc<String>,
+        original_name: Vc<String>,
+        path: Vc<FileSystemPath>,
+        depend_on: Vc<PageEndpoint>,
+    ) -> Vc<Self> {
+        PageEndpoint {
+            ty,
+            pages_project,
+            pathname,
+            original_name,
+            path,
+            depend_on: Some(depend_on),
         }
         .cell()
     }
@@ -520,7 +554,7 @@ impl PageEndpoint {
     }
 
     #[turbo_tasks::function]
-    async fn client_chunks(self: Vc<Self>) -> Result<Vc<OutputAssets>> {
+    async fn client_chunks_chunk_group(self: Vc<Self>) -> Result<Vc<ChunkGroupResult>> {
         let this = self.await?;
 
         let client_module_context = this.pages_project.client_module_context();
@@ -562,15 +596,33 @@ impl PageEndpoint {
 
         let client_chunking_context = this.pages_project.project().client_chunking_context();
 
-        let mut client_chunks = client_chunking_context
-            .evaluated_chunk_group_assets(
-                client_module.ident(),
-                this.pages_project
-                    .client_runtime_entries()
-                    .with_entry(Vc::upcast(client_main_module))
-                    .with_entry(Vc::upcast(client_module)),
-                Value::new(AvailabilityInfo::Root),
-            )
+        let availablility_info = if let Some(depend_on) = this.depend_on {
+            depend_on
+                .client_chunks_chunk_group()
+                .await?
+                .availability_info
+        } else {
+            AvailabilityInfo::Root
+        };
+
+        Ok(client_chunking_context.evaluated_chunk_group(
+            client_module.ident(),
+            this.pages_project
+                .client_runtime_entries()
+                .with_entry(Vc::upcast(client_main_module))
+                .with_entry(Vc::upcast(client_module)),
+            Value::new(availablility_info),
+        ))
+    }
+
+    #[turbo_tasks::function]
+    async fn client_chunks(self: Vc<Self>) -> Result<Vc<OutputAssets>> {
+        let this = self.await?;
+
+        let mut client_chunks = self
+            .client_chunks_chunk_group()
+            .await?
+            .assets
             .await?
             .clone_value();
 
