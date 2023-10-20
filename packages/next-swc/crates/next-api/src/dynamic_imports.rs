@@ -95,7 +95,11 @@ pub(crate) async fn collect_evaluated_chunk_group(
     evaluatable_assets: Vc<EvaluatableAssets>,
 ) -> Result<Vc<DynamicImportedChunks>> {
     collect_chunk_group_inner(dynamic_import_entries, |chunk_item| {
-        chunking_context.evaluated_chunk_group(chunk_item.ident(), evaluatable_assets)
+        chunking_context.evaluated_chunk_group(
+            chunk_item.ident(),
+            evaluatable_assets,
+            Value::new(AvailabilityInfo::Root),
+        )
     })
     .await
 }

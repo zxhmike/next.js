@@ -569,6 +569,7 @@ impl PageEndpoint {
                     .client_runtime_entries()
                     .with_entry(Vc::upcast(client_main_module))
                     .with_entry(Vc::upcast(client_module)),
+                Value::new(AvailabilityInfo::Root),
             )
             .await?
             .clone_value();
@@ -620,8 +621,11 @@ impl PageEndpoint {
             };
             evaluatable_assets.push(evaluatable);
 
-            let edge_files = edge_chunking_context
-                .evaluated_chunk_group(ssr_module.ident(), Vc::cell(evaluatable_assets.clone()));
+            let edge_files = edge_chunking_context.evaluated_chunk_group(
+                ssr_module.ident(),
+                Vc::cell(evaluatable_assets.clone()),
+                Value::new(AvailabilityInfo::Root),
+            );
 
             let dynamic_import_modules = collect_next_dynamic_imports(ssr_module).await?;
             let dynamic_import_entries = collect_evaluated_chunk_group(

@@ -788,6 +788,7 @@ impl AppEndpoint {
                 let files = chunking_context.evaluated_chunk_group(
                     app_entry.rsc_entry.ident(),
                     Vc::cell(evaluatable_assets.clone()),
+                    Value::new(AvailabilityInfo::Root),
                 );
                 server_assets.extend(files.await?.iter().copied());
 
