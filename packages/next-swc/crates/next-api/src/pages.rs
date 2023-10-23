@@ -596,23 +596,42 @@ impl PageEndpoint {
 
         let client_chunking_context = this.pages_project.project().client_chunking_context();
 
-        let availablility_info = if let Some(depend_on) = this.depend_on {
-            depend_on
-                .client_chunks_chunk_group()
-                .await?
-                .availability_info
+        let (availability_info, base_assets) = if let Some(depend_on) = this.depend_on {
+            let client_chunks_chunk_group = depend_on.client_chunks_chunk_group().await?;
+            (
+                client_chunks_chunk_group.availability_info,
+                Some(client_chunks_chunk_group.assets),
+            )
         } else {
-            AvailabilityInfo::Root
+            (AvailabilityInfo::Root, None)
         };
 
-        Ok(client_chunking_context.evaluated_chunk_group(
+        let mut chunk_group = client_chunking_context.evaluated_chunk_group(
             client_module.ident(),
             this.pages_project
                 .client_runtime_entries()
                 .with_entry(Vc::upcast(client_main_module))
                 .with_entry(Vc::upcast(client_module)),
-            Value::new(availablility_info),
-        ))
+            Value::new(availability_info),
+        );
+
+        if let Some(base_assets) = base_assets {
+            let chunk_group_value = chunk_group.await?;
+            chunk_group = ChunkGroupResult {
+                assets: Vc::cell(
+                    base_assets
+                        .await?
+                        .iter()
+                        .copied()
+                        .chain(chunk_group_value.assets.await?.iter().copied())
+                        .collect(),
+                ),
+                availability_info,
+            }
+            .cell()
+        }
+
+        Ok(chunk_group)
     }
 
     #[turbo_tasks::function]
