@@ -1,5 +1,7 @@
 import dynamic from 'next/dynamic'
 
+/// /* webpackMode: "weak" */
+
 const DynamicSSRFalse = dynamic(() => import('./ssr-false-module'), {
   ssr: false,
 })

@@ -392,11 +392,11 @@ impl Fold for NextDynamicPatcher {
                         // if it's server components SSR layer
                         if !self.is_react_server_layer {
                             // Transform 1st argument `expr.args[0]` aka the module loader to:
-                            // `typeof window !== 'window' && (() => {
+                            // (() => {
                             //    expr.args[0]
                             // })`
                             // For instance:
-                            // dynamic(`typeof window !== 'window' && (() => {
+                            // dynamic((() => {
                             //   /**
                             //    * this will make sure we can traverse the module first but will be
                             //    * tree-shake out in server bundle */
