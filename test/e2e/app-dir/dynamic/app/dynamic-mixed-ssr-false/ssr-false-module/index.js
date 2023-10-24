@@ -1,3 +1,5 @@
+'use client'
+
 import Client from './ssr-false-client'
 import Server from './ssr-false-server'
 

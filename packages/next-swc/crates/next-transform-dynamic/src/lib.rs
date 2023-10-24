@@ -10,11 +10,12 @@ use swc_core::{
         ast::{
             op, ArrayLit, ArrowExpr, BinExpr, BinaryOp, BlockStmt, BlockStmtOrExpr, Bool, CallExpr,
             Callee, Expr, ExprOrSpread, ExprStmt, Id, Ident, ImportDecl, ImportDefaultSpecifier,
-            ImportNamedSpecifier, ImportSpecifier, KeyValueProp, Lit, ModuleDecl, ModuleItem, Null,
-            ObjectLit, Prop, PropName, PropOrSpread, Stmt, Str, Tpl, UnaryExpr, UnaryOp,
+            ImportNamedSpecifier, ImportSpecifier, KeyValueProp, Lit, Module, ModuleDecl,
+            ModuleItem, Null, ObjectLit, Prop, PropName, PropOrSpread, Stmt, Str, Tpl, UnaryExpr,
+            UnaryOp,
         },
-        utils::{private_ident, ExprFactory},
-        visit::{Fold, FoldWith},
+        utils::{prepend_stmt, private_ident, quote_ident, ExprExt, ExprFactory},
+        visit::{noop_visit_mut_type, Fold, FoldWith, VisitMut, VisitMutWith},
     },
     quote,
 };
@@ -41,6 +42,7 @@ pub fn next_dynamic(
         dynamic_bindings: vec![],
         is_next_dynamic_first_arg: false,
         dynamically_imported_specifier: None,
+        added_nextjs_pure_import: false,
         state: match mode {
             NextDynamicMode::Webpack => NextDynamicPatcherState::Webpack,
             NextDynamicMode::Turbopack {
@@ -87,6 +89,7 @@ struct NextDynamicPatcher {
     is_next_dynamic_first_arg: bool,
     dynamically_imported_specifier: Option<(String, Span)>,
     state: NextDynamicPatcherState,
+    added_nextjs_pure_import: bool,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -123,6 +126,20 @@ enum TurbopackImport {
 }
 
 impl Fold for NextDynamicPatcher {
+    fn fold_module(&mut self, mut m: Module) -> Module {
+        m = m.fold_children_with(self);
+
+        // dbg!(self.added_nextjs_pure_import);
+        // println!("detect self.added_nextjs_pure_import");
+        if self.added_nextjs_pure_import {
+            let import_expression = quote!(
+                "import { __nextjs_pure } from 'next/dist/build/swc/helpers';" as ModuleItem
+            );
+            prepend_stmt(&mut m.body, import_expression);
+        }
+        m
+    }
+
     fn fold_module_items(&mut self, mut items: Vec<ModuleItem>) -> Vec<ModuleItem> {
         items = items.fold_children_with(self);
 
@@ -400,8 +417,20 @@ impl Fold for NextDynamicPatcher {
                             //   /**
                             //    * this will make sure we can traverse the module first but will be
                             //    * tree-shake out in server bundle */
-                            //   () => import('./client-mod')
+                            //   __next_pure(() => import('./client-mod'))
                             // }), { ssr: false })
+
+                            self.added_nextjs_pure_import = true;
+
+                            // create function call of `__next_js` wrapping the
+                            // `side_effect_free_loader_arg.as_arg()`
+                            let pure_fn_call = Expr::Call(CallExpr {
+                                span: DUMMY_SP,
+                                callee: quote_ident!("__nextjs_pure").as_callee(),
+                                args: vec![expr.args[0].expr.clone().as_arg()],
+                                type_args: Default::default(),
+                            });
+
                             let side_effect_free_loader_arg = Expr::Arrow(ArrowExpr {
                                 span: DUMMY_SP,
                                 params: vec![],
@@ -412,7 +441,8 @@ impl Fold for NextDynamicPatcher {
                                         // then it will be removed by tree-shaking.
                                         Stmt::Expr(ExprStmt {
                                             span: DUMMY_SP,
-                                            expr: expr.args[0].expr.clone(),
+                                            expr: Box::new(pure_fn_call), /* expr.args[0].expr.
+                                                                           * clone(), */
                                         }),
                                     ],
                                 })),
@@ -423,7 +453,6 @@ impl Fold for NextDynamicPatcher {
                             });
 
                             expr.args[0] = side_effect_free_loader_arg.as_arg();
-                            //  .as_arg();
                         }
                         // else {
                         //     expr.args[0] = Lit::Null(Null { span: DUMMY_SP
