@@ -11,8 +11,8 @@ use swc_core::{
             op, ArrayLit, ArrowExpr, BinExpr, BinaryOp, BlockStmt, BlockStmtOrExpr, Bool, CallExpr,
             Callee, Expr, ExprOrSpread, ExprStmt, Id, Ident, ImportDecl, ImportDefaultSpecifier,
             ImportNamedSpecifier, ImportSpecifier, KeyValueProp, Lit, Module, ModuleDecl,
-            ModuleItem, Null, ObjectLit, Prop, PropName, PropOrSpread, Stmt, Str, Tpl, UnaryExpr,
-            UnaryOp,
+            ModuleItem, Null, ObjectLit, ParenExpr, Prop, PropName, PropOrSpread, Stmt, Str, Tpl,
+            UnaryExpr, UnaryOp,
         },
         utils::{prepend_stmt, private_ident, quote_ident, ExprExt, ExprFactory},
         visit::{noop_visit_mut_type, Fold, FoldWith, VisitMut, VisitMutWith},
@@ -129,8 +129,6 @@ impl Fold for NextDynamicPatcher {
     fn fold_module(&mut self, mut m: Module) -> Module {
         m = m.fold_children_with(self);
 
-        // dbg!(self.added_nextjs_pure_import);
-        // println!("detect self.added_nextjs_pure_import");
         if self.added_nextjs_pure_import {
             let import_expression = quote!(
                 "import { __nextjs_pure } from 'next/dist/build/swc/helpers';" as ModuleItem
@@ -405,20 +403,20 @@ impl Fold for NextDynamicPatcher {
                     //     expr.args[0] = Lit::Null(Null { span: DUMMY_SP }).as_arg();
                     // }
 
-                    if has_ssr_false && self.is_server_compiler {
+                    if has_ssr_false {
                         // if it's server components SSR layer
-                        if !self.is_react_server_layer {
+                        if self.is_server && !self.is_rsc_server_layer {
                             // Transform 1st argument `expr.args[0]` aka the module loader to:
                             // (() => {
                             //    expr.args[0]
                             // })`
                             // For instance:
-                            // dynamic((() => {
+                            // dynamic((() =>
                             //   /**
                             //    * this will make sure we can traverse the module first but will be
                             //    * tree-shake out in server bundle */
-                            //   __next_pure(() => import('./client-mod'))
-                            // }), { ssr: false })
+                            //   __next_pure((() => import('./client-mod')))
+                            // ), { ssr: false })
 
                             self.added_nextjs_pure_import = true;
 
@@ -427,7 +425,14 @@ impl Fold for NextDynamicPatcher {
                             let pure_fn_call = Expr::Call(CallExpr {
                                 span: DUMMY_SP,
                                 callee: quote_ident!("__nextjs_pure").as_callee(),
-                                args: vec![expr.args[0].expr.clone().as_arg()],
+                                args: vec![Expr::Paren(ParenExpr {
+                                    span: DUMMY_SP,
+                                    expr: Box::new(Expr::Paren(ParenExpr {
+                                        span: DUMMY_SP,
+                                        expr: Box::new(expr.args[0].expr.as_expr().clone()),
+                                    })),
+                                })
+                                .into()],
                                 type_args: Default::default(),
                             });
 
@@ -437,13 +442,13 @@ impl Fold for NextDynamicPatcher {
                                 body: Box::new(BlockStmtOrExpr::BlockStmt(BlockStmt {
                                     span: DUMMY_SP,
                                     stmts: vec![
-                                        // loader is still inside the module but not executed,
-                                        // then it will be removed by tree-shaking.
                                         Stmt::Expr(ExprStmt {
                                             span: DUMMY_SP,
-                                            expr: Box::new(pure_fn_call), /* expr.args[0].expr.
-                                                                           * clone(), */
+                                            expr: Box::new(pure_fn_call),
                                         }),
+                                        // pure_fn_call,
+                                        // loader is still inside the module but not executed,
+                                        // then it will be removed by tree-shaking.
                                     ],
                                 })),
                                 is_async: true,
@@ -454,9 +459,6 @@ impl Fold for NextDynamicPatcher {
 
                             expr.args[0] = side_effect_free_loader_arg.as_arg();
                         }
-                        // else {
-                        //     expr.args[0] = Lit::Null(Null { span: DUMMY_SP
-                        // }).as_arg(); }
                     }
 
                     let second_arg = ExprOrSpread {

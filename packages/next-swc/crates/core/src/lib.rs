@@ -185,14 +185,14 @@ where
         },
     };
 
-    let (has_server_components, is_rsc_server_layer) = match &opts.server_components {
+    let is_rsc_server_layer = match &opts.server_components {
         Some(config) if config.truthy() => match config {
             // Always enable the Server Components mode for both
             // server and client layers.
-            react_server_components::Config::WithOptions(config) => (true, config.is_server),
-            _ => (false, false),
+            react_server_components::Config::WithOptions(config) => config.is_server,
+            _ => false,
         },
-        _ => (false, false),
+        _ => false,
     };
 
     chain!(
@@ -236,7 +236,15 @@ where
         next_dynamic(
             opts.is_development,
             opts.is_server_compiler,
-            is_rsc_server_layer,
+            match &opts.server_components {
+                Some(config) if config.truthy() => match config {
+                    // Always enable the Server Components mode for both
+                    // server and client layers.
+                    react_server_components::Config::WithOptions(config) => config.is_server,
+                    _ => false,
+                },
+                _ => false,
+            },
             NextDynamicMode::Webpack,
             file.name.clone(),
             opts.pages_dir.clone()
