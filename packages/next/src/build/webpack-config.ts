@@ -454,13 +454,12 @@ export default async function getBaseWebpackConfig(
       ].filter(Boolean)
     : []
 
-  const swcLoaderForMiddlewareLayer = useSWCLoader
-    ? swcServerLayerLoader
-    : // When using Babel, we will have to use SWC to do the optimization
-      // for middleware to tree shake the unused default optimized imports like "next/server".
-      // This will cause some performance overhead but
-      // acceptable as Babel will not be recommended.
-      [swcServerLayerLoader, babelLoader]
+  const swcLoaderForMiddlewareLayer =
+    // When using Babel, we will have to use SWC to do the optimization
+    // for middleware to tree shake the unused default optimized imports like "next/server".
+    // This will cause some performance overhead but
+    // acceptable as Babel will not be recommended.
+    [swcServerLayerLoader, babelLoader].filter(Boolean)
 
   // client components layers: SSR + browser
   const swcLoaderForClientLayer = [
