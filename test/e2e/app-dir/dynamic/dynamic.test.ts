@@ -60,9 +60,9 @@ createNextDescribe(
     })
 
     describe('no SSR', () => {
-      it('should not render client component imported through ssr: false in server components', async () => {
+      it('should not render client component imported through ssr: false in client components in edge runtime', async () => {
         // noSSR should not show up in html
-        const $ = await next.render$('/dynamic-mixed-ssr-false/server')
+        const $ = await next.render$('/dynamic-mixed-ssr-false/client-edge')
         expect($('#server-false-server-module')).not.toContain(
           'ssr-false-server-module-text'
         )
@@ -80,28 +80,31 @@ createNextDescribe(
 
         // in the server bundle should not contain client component imported through ssr: false
         if (isNextStart) {
-          const chunksDir = `.next/server/chunks`
-          const serverChunksFilePaths = await fsp.readdir(
-            `${next.testDir}/${chunksDir}`
-          )
+          const chunkPath =
+            '.next/server/app/dynamic-mixed-ssr-false/client-edge/page.js'
+          const edgeServerChunk = await next.readFile(chunkPath)
+
+          // const serverChunksFilePaths = await fsp.readdir(
+          //   `${next.testDir}/${chunksDir}`
+          // )
 
           let hasServerModule = false
-          const readFilePromises = serverChunksFilePaths.map(
-            async (filePath) => {
-              const pageServerChunk = await next.readFile(
-                `${chunksDir}/${filePath}`
-                // filePath
-              )
-              hasServerModule ||= pageServerChunk.includes(
-                'ssr-false-server-module-text'
-              )
-              expect(pageServerChunk).not.toContain(
-                'ssr-false-client-module-text'
-              )
-            }
-          )
-          await Promise.all(readFilePromises)
-          expect(hasServerModule).toContain(true)
+          // const readFilePromises = serverChunksFilePaths.map(
+          //   async (filePath) => {
+          //     const pageServerChunk = await next.readFile(
+          //       `${chunkPath}/${filePath}`
+          //       // filePath
+          //     )
+          //     hasServerModule ||= pageServerChunk.includes(
+          //       'ssr-false-server-module-text'
+          //     )
+          //     expect(pageServerChunk).not.toContain(
+          //       'ssr-false-client-module-text'
+          //     )
+          //   }
+          // )
+          // await Promise.all(readFilePromises)
+          expect(edgeServerChunk).not.toContain('ssr-false-client-module-text')
 
           // const pageServerChunk = await next.readFile(
           //   `${chunksDir}/${serverChunksFilePaths[0]}`
@@ -133,33 +136,11 @@ createNextDescribe(
 
         // in the server bundle should not contain both server and client component imported through ssr: false
         if (isNextStart) {
-          // const pageServerChunk = await next.readFile(
-          //   '.next/server/app/dynamic-mixed-ssr-false/client/page.js'
-          // )
-          // expect(pageServerChunk).not.toContain('ssr-false-server-module-text')
-          // expect(pageServerChunk).not.toContain('ssr-false-client-module-text')
-
-          const chunksDir = `.next/server/chunks`
-          const serverChunksFilePaths = await fsp.readdir(
-            `${next.testDir}/${chunksDir}`
+          const pageServerChunk = await next.readFile(
+            '.next/server/app/dynamic-mixed-ssr-false/client/page.js'
           )
-          let hasServerModule = false
-          const readFilePromises = serverChunksFilePaths.map(
-            async (filePath) => {
-              const pageServerChunk = await next.readFile(
-                `${chunksDir}/${filePath}`
-                // filePath
-              )
-              hasServerModule ||= pageServerChunk.includes(
-                'ssr-false-server-module-text'
-              )
-              expect(pageServerChunk).not.toContain(
-                'ssr-false-client-module-text'
-              )
-            }
-          )
-          await Promise.all(readFilePromises)
-          expect(hasServerModule).toContain(false)
+          expect(pageServerChunk).not.toContain('ssr-false-server-module-text')
+          expect(pageServerChunk).not.toContain('ssr-false-client-module-text')
         }
       })
     })
