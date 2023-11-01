@@ -380,73 +380,11 @@ impl Fold for NextDynamicPatcher {
                         }
                     }
 
-                    // Don't strip the `loader` argument if suspense is true
-                    // See https://github.com/vercel/next.js/issues/36636 for background.
-
                     // Also don't strip the `loader` argument for server components (both
                     // server/client layers), since they're aliased to a
                     // React.lazy implementation.
-
-                    if has_ssr_false {
-                        println!(
-                            "self.is_server_compiler {} self.is_react_server_layer {}",
-                            self.is_server_compiler, self.is_react_server_layer
-                        );
-                        // if it's server components SSR layer
-                        if self.is_server_compiler && !self.is_react_server_layer {
-                            // Transform 1st argument `expr.args[0]` aka the module loader to:
-                            // (() => {
-                            //    expr.args[0]
-                            // })`
-                            // For instance:
-                            // dynamic((() =>
-                            //   /**
-                            //    * this will make sure we can traverse the module first but will be
-                            //    * tree-shake out in server bundle */
-                            //   __nextjs_pure((() => import('./client-mod')))
-                            // ), { ssr: false })
-
-                            self.added_nextjs_pure_import = true;
-
-                            // create function call of `__nextjs_pure` wrapping the
-                            // `side_effect_free_loader_arg.as_arg()`
-                            let pure_fn_call = Expr::Call(CallExpr {
-                                span: DUMMY_SP,
-                                callee: quote_ident!("__nextjs_pure").as_callee(),
-                                args: vec![Expr::Paren(ParenExpr {
-                                    span: DUMMY_SP,
-                                    expr: Box::new(Expr::Paren(ParenExpr {
-                                        span: DUMMY_SP,
-                                        expr: Box::new(expr.args[0].expr.as_expr().clone()),
-                                    })),
-                                })
-                                .into()],
-                                type_args: Default::default(),
-                            });
-
-                            let side_effect_free_loader_arg = Expr::Arrow(ArrowExpr {
-                                span: DUMMY_SP,
-                                params: vec![],
-                                body: Box::new(BlockStmtOrExpr::BlockStmt(BlockStmt {
-                                    span: DUMMY_SP,
-                                    stmts: vec![
-                                        Stmt::Expr(ExprStmt {
-                                            span: DUMMY_SP,
-                                            expr: Box::new(pure_fn_call),
-                                        }),
-                                        // pure_fn_call,
-                                        // loader is still inside the module but not executed,
-                                        // then it will be removed by tree-shaking.
-                                    ],
-                                })),
-                                is_async: true,
-                                is_generator: false,
-                                type_params: None,
-                                return_type: None,
-                            });
-
-                            expr.args[0] = side_effect_free_loader_arg.as_arg();
-                        }
+                    if has_ssr_false && self.is_server_compiler && !self.is_react_server_layer {
+                        expr.args[0] = Lit::Null(Null { span: DUMMY_SP }).as_arg();
                     }
 
                     let second_arg = ExprOrSpread {
