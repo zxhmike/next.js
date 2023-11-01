@@ -373,15 +373,6 @@ impl Fold for NextDynamicPatcher {
                                                 has_ssr_false = true
                                             }
                                         }
-                                        // if sym == "suspense" {
-                                        //     if let Some(Lit::Bool(Bool {
-                                        //         value: true,
-                                        //         span: _,
-                                        //     })) = value.as_lit()
-                                        //     {
-                                        //         has_suspense = true
-                                        //     }
-                                        // }
                                     }
                                 }
                             }
@@ -395,13 +386,6 @@ impl Fold for NextDynamicPatcher {
                     // Also don't strip the `loader` argument for server components (both
                     // server/client layers), since they're aliased to a
                     // React.lazy implementation.
-                    // if has_ssr_false
-                    //     && !has_suspense
-                    //     && self.is_server
-                    //     && !self.is_server_components
-                    // {
-                    //     expr.args[0] = Lit::Null(Null { span: DUMMY_SP }).as_arg();
-                    // }
 
                     if has_ssr_false {
                         // if it's server components SSR layer

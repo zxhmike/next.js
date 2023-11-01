@@ -189,7 +189,7 @@ where
         Some(config) if config.truthy() => match config {
             // Always enable the Server Components mode for both
             // server and client layers.
-            react_server_components::Config::WithOptions(config) => config.is_server,
+            react_server_components::Config::WithOptions(config) => config.is_react_server_layer,
             _ => false,
         },
         _ => false,
@@ -240,7 +240,7 @@ where
                 Some(config) if config.truthy() => match config {
                     // Always enable the Server Components mode for both
                     // server and client layers.
-                    react_server_components::Config::WithOptions(config) => config.is_server,
+                    react_server_components::Config::WithOptions(config) => config.is_react_server_layer,
                     _ => false,
                 },
                 _ => false,
