@@ -1,3 +1,4 @@
+import { __nextjs_pure } from 'next/dist/build/swc/helpers';
 import dynamic from 'next/dynamic';
 const DynamicComponentWithCustomLoading = dynamic(()=>import('../components/hello'), {
     loadableGenerated: {
@@ -7,7 +8,9 @@ const DynamicComponentWithCustomLoading = dynamic(()=>import('../components/hell
     },
     loading: ()=><p>...</p>
 });
-const DynamicClientOnlyComponent = dynamic(null, {
+const DynamicClientOnlyComponent = dynamic(async ()=>{
+    __nextjs_pure(()=>import('../components/hello'));
+}, {
     loadableGenerated: {
         modules: [
             "some-file.js -> " + "../components/hello"
@@ -15,7 +18,9 @@ const DynamicClientOnlyComponent = dynamic(null, {
     },
     ssr: false
 });
-const DynamicClientOnlyComponentWithSuspense = dynamic(()=>import('../components/hello'), {
+const DynamicClientOnlyComponentWithSuspense = dynamic(async ()=>{
+    __nextjs_pure(()=>import('../components/hello'));
+}, {
     loadableGenerated: {
         modules: [
             "some-file.js -> " + "../components/hello"

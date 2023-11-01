@@ -185,16 +185,6 @@ where
         },
     };
 
-    let is_rsc_server_layer = match &opts.server_components {
-        Some(config) if config.truthy() => match config {
-            // Always enable the Server Components mode for both
-            // server and client layers.
-            react_server_components::Config::WithOptions(config) => config.is_react_server_layer,
-            _ => false,
-        },
-        _ => false,
-    };
-
     chain!(
         disallow_re_export_all_in_page::disallow_re_export_all_in_page(opts.is_page_file),
         match &opts.server_components {

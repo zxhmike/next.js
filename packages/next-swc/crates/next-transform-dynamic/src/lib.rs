@@ -388,6 +388,10 @@ impl Fold for NextDynamicPatcher {
                     // React.lazy implementation.
 
                     if has_ssr_false {
+                        println!(
+                            "self.is_server_compiler {} self.is_react_server_layer {}",
+                            self.is_server_compiler, self.is_react_server_layer
+                        );
                         // if it's server components SSR layer
                         if self.is_server_compiler && !self.is_react_server_layer {
                             // Transform 1st argument `expr.args[0]` aka the module loader to:
@@ -399,12 +403,12 @@ impl Fold for NextDynamicPatcher {
                             //   /**
                             //    * this will make sure we can traverse the module first but will be
                             //    * tree-shake out in server bundle */
-                            //   __next_pure((() => import('./client-mod')))
+                            //   __nextjs_pure((() => import('./client-mod')))
                             // ), { ssr: false })
 
                             self.added_nextjs_pure_import = true;
 
-                            // create function call of `__next_js` wrapping the
+                            // create function call of `__nextjs_pure` wrapping the
                             // `side_effect_free_loader_arg.as_arg()`
                             let pure_fn_call = Expr::Call(CallExpr {
                                 span: DUMMY_SP,
