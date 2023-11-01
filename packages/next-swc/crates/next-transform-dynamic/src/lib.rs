@@ -405,7 +405,7 @@ impl Fold for NextDynamicPatcher {
 
                     if has_ssr_false {
                         // if it's server components SSR layer
-                        if self.is_server && !self.is_rsc_server_layer {
+                        if self.is_server_compiler && !self.is_react_server_layer {
                             // Transform 1st argument `expr.args[0]` aka the module loader to:
                             // (() => {
                             //    expr.args[0]
